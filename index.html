@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>紅酒查詢系統</title>
+  <title>紅酒查詢系統 - 鼎山店</title>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
@@ -18,6 +18,7 @@
     h1 {
       color: #7b2e2e;
       margin-bottom: 20px;
+      line-height: 1.6;
     }
     textarea {
       width: 90%;
@@ -57,14 +58,17 @@
       padding: 10px;
       text-align: center;
       font-size: 14px;
+      vertical-align: middle;
     }
     th {
       background-color: #7b2e2e;
       color: white;
     }
-    img.barcode {
-      width: 120px;
-      height: 60px;
+    td svg.barcode {
+      width: 150px !important;
+      height: 70px !important;
+      display: block;
+      margin: auto;
     }
 
     /* 🔴 紅酒杯動畫 */
@@ -110,12 +114,12 @@
     @media (max-width: 768px) {
       table { font-size: 12px; }
       th, td { padding: 6px; }
-      img.barcode { width: 100px; height: 50px; }
+      td svg.barcode { width: 120px !important; height: 60px !important; }
     }
   </style>
 </head>
 <body>
-  <h1>🍷 紅酒商品查詢系統 僅限"鼎山店"使用</h1>
+  <h1>🍷 紅酒商品查詢系統<br>僅限「鼎山店」使用</h1>
   <textarea id="orderInput" placeholder="例如：01-01 或多筆 01-01, 03-01"></textarea><br>
   <button type="button" onclick="search()">查詢</button>
   <button type="button" onclick="downloadImage()">下載結果圖片</button>
@@ -143,7 +147,7 @@
       }
 
       resultDiv.innerHTML = "";
-      loading.style.display = "flex"; // 顯示紅酒杯動畫
+      loading.style.display = "flex";
 
       try {
         const response = await fetch(`${API_URL}?order=${encodeURIComponent(orderInput)}`);
@@ -183,12 +187,11 @@
         table += `</table>`;
         resultDiv.innerHTML = table;
 
-        // ✅ 生成條碼圖案
+        // ✅ 生成條碼
         data.forEach(item => {
           const barcodeValue = item["條碼"];
           if (barcodeValue) {
-            const barcodeId = `barcode_${barcodeValue}`;
-            JsBarcode(`#${barcodeId}`, barcodeValue, { format: "EAN13", displayValue: false });
+            JsBarcode(`#barcode_${barcodeValue}`, barcodeValue, { format: "EAN13", displayValue: false });
           }
         });
 
@@ -207,9 +210,17 @@
         return;
       }
       try {
-        const canvas = await html2canvas(resultDiv, { scale: 2, useCORS: true });
+        // 延遲確保條碼繪製完成
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const canvas = await html2canvas(resultDiv, {
+          scale: 2,
+          useCORS: true,
+          windowWidth: document.body.scrollWidth,
+          scrollX: 0,
+          scrollY: -window.scrollY
+        });
         const link = document.createElement("a");
-        link.download = "紅酒查詢結果.png";
+        link.download = "紅酒查詢結果_鼎山店.png";
         link.href = canvas.toDataURL();
         link.click();
       } catch (err) {
@@ -220,4 +231,3 @@
   </script>
 </body>
 </html>
-
