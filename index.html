@@ -1,105 +1,196 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>紅酒品項查詢</title>
-<style>
-body {
-  font-family: "Microsoft JhengHei", sans-serif;
-  background-color: #faf8f5;
-  color: #333;
-  margin: 2em;
-  line-height: 1.6;
-}
-h1, h2 { color: #6b1e1e; }
-input, textarea, button {
-  font-size: 1em;
-  margin: 0.5em 0;
-  padding: 0.6em;
-  width: 100%;
-  max-width: 400px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-button {
-  background-color: #6b1e1e;
-  color: white;
-  cursor: pointer;
-  transition: 0.2s;
-}
-button:hover { background-color: #8a2a2a; }
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 1.5em;
-}
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
-  vertical-align: top;
-}
-th { background-color: #eee; }
-img { max-height: 80px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>紅酒商品查詢系統</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: #faf7f5;
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #800000;
+    }
+    textarea {
+      width: 90%;
+      height: 80px;
+      margin: 10px 0;
+      font-size: 16px;
+      padding: 8px;
+    }
+    button {
+      background: #800000;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #a00000;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 95%;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #f0e0e0;
+    }
+    img {
+      max-height: 80px;
+    }
+    .barcode-svg {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
-<h1>🍷 紅酒品項查詢</h1>
+  <h1>🍷 紅酒商品查詢系統</h1>
+  <p>請輸入一個或多個訂購編號（可用逗號、空白或換行分隔）：</p>
+  <textarea id="orderInput" placeholder="例如：A1001 或多筆 A1001, A1002"></textarea><br>
+  <button onclick="search()">查詢</button>
 
-<h2>單品項查詢</h2>
-<input type="text" id="single" placeholder="請輸入訂購編號">
-<button onclick="searchSingle()">查詢</button>
+  <table id="result">
+    <tr><td>請輸入訂購編號後按下查詢</td></tr>
+  </table>
 
-<h2>多品項批次查詢</h2>
-<textarea id="multi" rows="4" placeholder="可輸入多個訂購編號，用逗號、空白或換行分隔"></textarea>
-<button onclick="searchMulti()">批次查詢</button>
+  <!-- JsBarcode Library -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
-<div id="loading" style="display:none;">查詢中，請稍候...</div>
-<table id="result"></table>
+  <script>
+    // 你的 Google Apps Script 網址
+    const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-<script>
-// 改成你自己的 Apps Script 網址👇
-const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
+    // 查詢按鈕動作
+    async function search() {
+      const input = document.getElementById('orderInput').value.trim();
+      if (!input) {
+        alert("請輸入訂購編號！");
+        return;
+      }
 
-async function fetchData(order) {
-  document.getElementById('loading').style.display = 'block';
-  const res = await fetch(`${API_URL}?order=${encodeURIComponent(order)}`);
-  const data = await res.json();
-  document.getElementById('loading').style.display = 'none';
-  return data;
-}
+      document.getElementById('result').innerHTML = "<tr><td>查詢中...</td></tr>";
 
-function renderTable(data) {
-  const table = document.getElementById('result');
-  if (!data || data.length === 0) {
-    table.innerHTML = '<tr><td>查無資料</td></tr>';
-    return;
-  }
-  const headers = Object.keys(data[0]);
-  table.innerHTML = `
-    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-    ${data.map(row => `<tr>${headers.map(h => 
-      h === '條碼圖' && row[h] 
-        ? `<td><img src="${row[h]}" alt="條碼圖"></td>` 
-        : `<td>${row[h] ?? ''}</td>`
-    ).join('')}</tr>`).join('')}
-  `;
-}
+      try {
+        const res = await fetch(`${API_URL}?order=${encodeURIComponent(input)}`);
+        const data = await res.json();
+        renderTable(data);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('result').innerHTML = "<tr><td>查詢失敗，請稍後再試。</td></tr>";
+      }
+    }
 
-async function searchSingle() {
-  const order = document.getElementById('single').value.trim();
-  if (!order) return alert('請輸入訂購編號');
-  const data = await fetchData(order);
-  renderTable(data);
-}
+    // 🧮 計算 EAN-13 檢查碼
+    function computeEAN13Checksum(code12) {
+      if (!/^\d{12}$/.test(code12)) return null;
+      let sum = 0;
+      for (let i = 0; i < 12; i++) {
+        const digit = parseInt(code12.charAt(i), 10);
+        sum += (i % 2 === 0) ? digit : digit * 3;
+      }
+      const mod = sum % 10;
+      const check = (mod === 0) ? 0 : (10 - mod);
+      return String(check);
+    }
 
-async function searchMulti() {
-  const order = document.getElementById('multi').value.trim();
-  if (!order) return alert('請輸入至少一個訂購編號');
-  const data = await fetchData(order);
-  renderTable(data);
-}
-</script>
+    // 確保條碼為正確的 EAN-13
+    function ensureEAN13(code) {
+      const raw = String(code || '').replace(/\s+/g, '');
+      if (/^\d{13}$/.test(raw)) {
+        const body = raw.slice(0, 12);
+        const expected = computeEAN13Checksum(body);
+        if (expected === raw.charAt(12)) return raw;
+        return body + expected;
+      }
+      if (/^\d{12}$/.test(raw)) {
+        const check = computeEAN13Checksum(raw);
+        return raw + check;
+      }
+      return null;
+    }
+
+    // 將 EAN-13 條碼繪製到儲存格中
+    function renderEAN13IntoCell(td, code) {
+      td.innerHTML = '';
+      const ean = ensureEAN13(String(code || ''));
+      if (!ean) {
+        td.textContent = code ?? '';
+        return;
+      }
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.classList.add('barcode-svg');
+      td.appendChild(svg);
+      try {
+        JsBarcode(svg, ean, {
+          format: "ean13",
+          displayValue: true,
+          fontSize: 12,
+          width: 2,
+          height: 50,
+          margin: 4
+        });
+      } catch (err) {
+        td.textContent = code;
+      }
+    }
+
+    // 顯示查詢結果表格
+    function renderTable(data) {
+      const table = document.getElementById('result');
+      if (!data || data.length === 0) {
+        table.innerHTML = "<tr><td>查無資料</td></tr>";
+        return;
+      }
+
+      const headers = Object.keys(data[0]);
+      let html = "<tr>" + headers.map(h => `<th>${h}</th>`).join('') + "</tr>";
+      html += data.map(row => {
+        return "<tr>" + headers.map(h => `<td data-col="${h}">${row[h] ?? ''}</td>`).join('') + "</tr>";
+      }).join('');
+      table.innerHTML = html;
+
+      // 針對每個儲存格，處理條碼或圖片欄位
+      table.querySelectorAll('td[data-col]').forEach(td => {
+        const col = td.getAttribute('data-col');
+        const value = td.textContent || '';
+        td.textContent = ''; // 清空以利插入內容
+
+        if (/條碼圖|image/i.test(col)) {
+          if (value.startsWith('http') || value.startsWith('data:')) {
+            const img = document.createElement('img');
+            img.src = value;
+            img.alt = '條碼圖';
+            td.appendChild(img);
+          } else {
+            td.textContent = value;
+          }
+          return;
+        }
+
+        if (/條碼|barcode|EAN/i.test(col)) {
+          renderEAN13IntoCell(td, value);
+          return;
+        }
+
+        td.textContent = value;
+      });
+    }
+  </script>
 </body>
 </html>
