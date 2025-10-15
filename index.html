@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>紅酒查詢系統 - 鼎山店</title>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -15,11 +15,13 @@
       text-align: center;
       color: #3b1e1e;
     }
+
     h1 {
       color: #7b2e2e;
       margin-bottom: 20px;
       line-height: 1.6;
     }
+
     textarea {
       width: 90%;
       max-width: 400px;
@@ -30,6 +32,13 @@
       border-radius: 10px;
       resize: none;
     }
+
+    p.note {
+      font-size: 14px;
+      color: #7b2e2e;
+      margin-top: 5px;
+    }
+
     button {
       background-color: #7b2e2e;
       color: white;
@@ -41,9 +50,11 @@
       font-size: 16px;
       transition: 0.2s;
     }
+
     button:hover {
       background-color: #a94444;
     }
+
     table {
       width: 100%;
       max-width: 1200px;
@@ -53,6 +64,7 @@
       border-radius: 12px;
       overflow: hidden;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 10px;
@@ -60,10 +72,12 @@
       font-size: 14px;
       vertical-align: middle;
     }
+
     th {
       background-color: #7b2e2e;
       color: white;
     }
+
     td svg.barcode {
       width: 150px !important;
       height: 70px !important;
@@ -71,39 +85,83 @@
       margin: auto;
     }
 
-    /* 🔴 紅酒杯動畫 */
+    /* 🔴 紅酒瓶倒酒動畫 */
     #loading {
       display: none;
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.9);
       z-index: 9999;
       justify-content: center;
       align-items: center;
       flex-direction: column;
     }
-    .wine-glass {
-      width: 80px;
-      height: 120px;
+
+    .scene {
+      position: relative;
+      width: 150px;
+      height: 180px;
+    }
+
+    .bottle {
+      position: absolute;
+      top: 0;
+      left: 40px;
+      width: 30px;
+      height: 100px;
+      background: linear-gradient(to bottom, #222, #444);
+      border-radius: 10px 10px 5px 5px;
+      transform-origin: bottom right;
+      animation: pourBottle 2s infinite ease-in-out;
+    }
+
+    .wine {
+      position: absolute;
+      left: 70px;
+      top: 80px;
+      width: 4px;
+      height: 0;
+      background: linear-gradient(to top, #7b2e2e, #a33);
+      border-radius: 2px;
+      animation: pourWine 2s infinite ease-in-out;
+    }
+
+    .glass {
+      position: absolute;
+      bottom: 0;
+      left: 45px;
+      width: 60px;
+      height: 80px;
       border: 4px solid #7b2e2e;
       border-radius: 0 0 40px 40px;
-      position: relative;
       overflow: hidden;
-      background: transparent;
     }
+
     .wine-fill {
       position: absolute;
       bottom: 0;
       width: 100%;
       height: 0%;
       background: linear-gradient(to top, #7b2e2e, #b44);
-      animation: fillWine 2s infinite alternate ease-in-out;
+      animation: fillGlass 2s infinite alternate ease-in-out;
     }
-    @keyframes fillWine {
+
+    @keyframes pourBottle {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-45deg); }
+    }
+
+    @keyframes pourWine {
+      0%, 100% { height: 0; }
+      50% { height: 60px; }
+    }
+
+    @keyframes fillGlass {
       0% { height: 0%; }
-      100% { height: 80%; }
+      100% { height: 60%; }
     }
+
     #loading p {
       margin-top: 15px;
       font-size: 18px;
@@ -120,13 +178,19 @@
 </head>
 <body>
   <h1>🍷 紅酒商品查詢系統<br>僅限「鼎山店」使用</h1>
+
   <textarea id="orderInput" placeholder="例如：01-01 或多筆 01-01, 03-01"></textarea><br>
+  <p class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以 5 支為限。</p>
   <button type="button" onclick="search()">查詢</button>
   <button type="button" onclick="downloadImage()">下載結果圖片</button>
 
   <div id="loading">
-    <div class="wine-glass">
-      <div class="wine-fill"></div>
+    <div class="scene">
+      <div class="bottle"></div>
+      <div class="wine"></div>
+      <div class="glass">
+        <div class="wine-fill"></div>
+      </div>
     </div>
     <p>資料查詢中，請稍候...</p>
   </div>
@@ -210,7 +274,6 @@
         return;
       }
       try {
-        // 延遲確保條碼繪製完成
         await new Promise(resolve => setTimeout(resolve, 800));
         const canvas = await html2canvas(resultDiv, {
           scale: 2,
