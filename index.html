@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>紅酒商品查詢系統</title>
   <style>
     body {
@@ -10,38 +10,57 @@
       background: #faf7f5;
       color: #333;
       text-align: center;
-      padding: 20px;
+      padding: 15px;
     }
+
     h1 {
       color: #800000;
+      font-size: 1.6em;
+      margin-bottom: 10px;
     }
+
     textarea {
-      width: 90%;
+      width: 95%;
       height: 80px;
       margin: 10px 0;
       font-size: 16px;
       padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      resize: vertical;
     }
+
     button {
       background: #800000;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 10px 18px;
       font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
-      margin: 5px;
+      margin: 6px;
     }
+
     button:hover {
       background: #a00000;
     }
+
+    /* ✅ 手機可左右滑動表格 */
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
+      margin-top: 15px;
+    }
+
     table {
-      margin: 20px auto;
       border-collapse: collapse;
-      width: 95%;
+      min-width: 800px;
       background: white;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin: 0 auto;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 8px;
@@ -49,15 +68,30 @@
       font-size: 14px;
       word-break: break-word;
     }
+
     th {
       background: #f0e0e0;
     }
+
     img {
-      max-height: 80px;
+      max-height: 60px;
     }
+
     .barcode-svg {
       display: block;
       margin: 0 auto;
+      width: 100%;
+      max-width: 150px;
+      height: auto;
+    }
+
+    /* 手機版優化 */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.3em; }
+      textarea { font-size: 14px; }
+      button { font-size: 14px; padding: 8px 12px; }
+      th, td { font-size: 12px; padding: 5px; }
+      img { max-height: 50px; }
     }
   </style>
 </head>
@@ -68,13 +102,13 @@
   <button onclick="search()">查詢</button>
   <button onclick="downloadImage()">下載結果圖片</button>
 
-  <div id="resultWrapper">
+  <div id="resultWrapper" class="table-container">
     <table id="result">
       <tr><td>請輸入訂購編號後按下查詢</td></tr>
     </table>
   </div>
 
-  <!-- JsBarcode & html2canvas Libraries -->
+  <!-- JsBarcode & html2canvas -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
@@ -108,8 +142,7 @@
         sum += (i % 2 === 0) ? digit : digit * 3;
       }
       const mod = sum % 10;
-      const check = (mod === 0) ? 0 : (10 - mod);
-      return String(check);
+      return mod === 0 ? "0" : String(10 - mod);
     }
 
     function ensureEAN13(code) {
@@ -120,8 +153,7 @@
       if (raw.length === 12) return raw + computeEAN13Checksum(raw);
       if (raw.length === 13) {
         const body = raw.slice(0, 12);
-        const expected = computeEAN13Checksum(body);
-        return body + expected;
+        return body + computeEAN13Checksum(body);
       }
       return null;
     }
@@ -156,7 +188,7 @@
       const headers = Object.keys(data[0]);
       let html = "<tr>" + headers.map(h => `<th>${h}</th>`).join('') + "</tr>";
       html += data.map(row => {
-        return "<tr>" + headers.map(h => `<td data-col="${h}">${row[h] ?? ''}</td>`).join('') + "</tr>";
+        return "<tr>" + headers.map(h => `<td data-col='${h}'>${row[h] ?? ''}</td>`).join('') + "</tr>";
       }).join('');
       table.innerHTML = html;
 
@@ -168,14 +200,14 @@
         tds.forEach(td => {
           const col = td.getAttribute('data-col');
           const value = td.textContent.trim();
-          if (col === "條碼" || /barcode$/i.test(col)) barcodeValue = value;
-          if (col === "條碼圖" || /barcode_img|barcode_image/i.test(col)) barcodeImgCell = td;
+          if (col === "條碼") barcodeValue = value;
+          if (col === "條碼圖") barcodeImgCell = td;
         });
 
         if (barcodeImgCell) {
           const original = barcodeImgCell.textContent.trim();
           barcodeImgCell.textContent = '';
-          if (original.startsWith('http') || original.startsWith('data:')) {
+          if (original.startsWith('http')) {
             const img = document.createElement('img');
             img.src = original;
             img.alt = '條碼圖';
@@ -189,21 +221,24 @@
       });
     }
 
-    // ✅ 新增：將查詢結果轉成圖片並下載
     async function downloadImage() {
-      const resultWrapper = document.getElementById("resultWrapper");
-      if (!resultWrapper || resultWrapper.innerText.includes("查詢中") || resultWrapper.innerText.includes("請輸入")) {
+      const wrapper = document.getElementById("resultWrapper");
+      if (!wrapper || wrapper.innerText.includes("查詢中") || wrapper.innerText.includes("請輸入")) {
         alert("請先查詢商品再下載圖片！");
         return;
       }
 
-      // 使用 html2canvas 轉成圖片
-      const canvas = await html2canvas(resultWrapper, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
+      // 延遲一點確保圖片條碼載入完成
+      await new Promise(r => setTimeout(r, 500));
 
-      // 預覽與下載
-      const preview = confirm("是否要下載查詢結果圖片？");
-      if (preview) {
+      const canvas = await html2canvas(wrapper, {
+        scale: 2,
+        scrollY: -window.scrollY,
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const confirmDownload = confirm("是否下載查詢結果圖片？");
+      if (confirmDownload) {
         const link = document.createElement("a");
         link.href = imgData;
         link.download = "紅酒查詢結果.png";
