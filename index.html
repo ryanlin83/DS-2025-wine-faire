@@ -76,7 +76,7 @@
     // ✅ 你的 Google Apps Script 網址
     const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-    // 🔍 查詢功能
+    // 查詢功能
     async function search() {
       const input = document.getElementById('orderInput').value.trim();
       if (!input) {
@@ -162,34 +162,44 @@
       }).join('');
       table.innerHTML = html;
 
-      // 逐欄處理（只在「條碼圖」欄中生成圖）
+      // 逐筆檢查：若有「條碼」與「條碼圖」欄，根據「條碼」生成圖片放到「條碼圖」
       table.querySelectorAll('tr').forEach(tr => {
         const tds = tr.querySelectorAll('td[data-col]');
         let barcodeValue = null;
-        let barcodeCell = null;
+        let barcodeImgCell = null;
 
         tds.forEach(td => {
           const col = td.getAttribute('data-col');
           const value = td.textContent.trim();
 
-          if (/條碼$|barcode$/i.test(col)) {
-            // 條碼欄位保留數字
+          // 儲存條碼數字
+          if (col === "條碼" || /barcode$/i.test(col)) {
             barcodeValue = value;
           }
 
-          if (/條碼圖|barcode_img|barcode_image/i.test(col)) {
-            barcodeCell = td;
+          // 找出條碼圖欄位
+          if (col === "條碼圖" || /barcode_img|barcode_image/i.test(col)) {
+            barcodeImgCell = td;
           }
         });
 
-        // 若有條碼數字且有「條碼圖」欄位 → 產生條碼圖
-        if (barcodeValue && barcodeCell) {
-          barcodeCell.innerHTML = ''; // 清空原內容
-          const svg = createBarcodeFromNumber(barcodeValue);
-          if (svg) {
-            barcodeCell.appendChild(svg);
-          } else {
-            barcodeCell.textContent = '(條碼無效)';
+        // 如果條碼圖欄有網址（已存在圖片） → 保留原圖片
+        if (barcodeImgCell) {
+          const original = barcodeImgCell.textContent.trim();
+          barcodeImgCell.textContent = '';
+          if (original.startsWith('http') || original.startsWith('data:')) {
+            const img = document.createElement('img');
+            img.src = original;
+            img.alt = '條碼圖';
+            barcodeImgCell.appendChild(img);
+          } else if (barcodeValue) {
+            // 沒有原圖就自動產生
+            const svg = createBarcodeFromNumber(barcodeValue);
+            if (svg) {
+              barcodeImgCell.appendChild(svg);
+            } else {
+              barcodeImgCell.textContent = '(條碼無效)';
+            }
           }
         }
       });
