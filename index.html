@@ -30,6 +30,7 @@
       font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
+      margin: 5px;
     }
     button:hover {
       background: #a00000;
@@ -46,6 +47,7 @@
       padding: 8px;
       text-align: center;
       font-size: 14px;
+      word-break: break-word;
     }
     th {
       background: #f0e0e0;
@@ -64,19 +66,21 @@
   <p>請輸入一個或多個訂購編號（可用逗號、空白或換行分隔）：</p>
   <textarea id="orderInput" placeholder="例如：A1001 或多筆 A1001, A1002"></textarea><br>
   <button onclick="search()">查詢</button>
+  <button onclick="downloadImage()">下載結果圖片</button>
 
-  <table id="result">
-    <tr><td>請輸入訂購編號後按下查詢</td></tr>
-  </table>
+  <div id="resultWrapper">
+    <table id="result">
+      <tr><td>請輸入訂購編號後按下查詢</td></tr>
+    </table>
+  </div>
 
-  <!-- JsBarcode Library -->
+  <!-- JsBarcode & html2canvas Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
   <script>
-    // ✅ 你的 Google Apps Script 網址
     const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-    // 查詢功能
     async function search() {
       const input = document.getElementById('orderInput').value.trim();
       if (!input) {
@@ -96,7 +100,6 @@
       }
     }
 
-    // 🧮 計算 EAN-13 檢查碼
     function computeEAN13Checksum(code12) {
       if (!/^\d{12}$/.test(code12)) return null;
       let sum = 0;
@@ -109,27 +112,23 @@
       return String(check);
     }
 
-    // 確保條碼為正確的 EAN-13 格式
     function ensureEAN13(code) {
-      const raw = String(code || '').replace(/\s+/g, '');
-      if (/^\d{13}$/.test(raw)) {
+      let raw = String(code || '').replace(/\s+/g, '');
+      if (!/^\d+$/.test(raw)) return null;
+      if (raw.length < 12) raw = raw.padStart(12, '0');
+      if (raw.length > 13) raw = raw.slice(0, 13);
+      if (raw.length === 12) return raw + computeEAN13Checksum(raw);
+      if (raw.length === 13) {
         const body = raw.slice(0, 12);
         const expected = computeEAN13Checksum(body);
-        if (expected === raw.charAt(12)) return raw;
         return body + expected;
-      }
-      if (/^\d{12}$/.test(raw)) {
-        const check = computeEAN13Checksum(raw);
-        return raw + check;
       }
       return null;
     }
 
-    // 產生條碼圖（根據條碼數字）
     function createBarcodeFromNumber(code) {
       const ean = ensureEAN13(code);
       if (!ean) return null;
-
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.classList.add('barcode-svg');
       try {
@@ -147,7 +146,6 @@
       }
     }
 
-    // 顯示查詢結果表格
     function renderTable(data) {
       const table = document.getElementById('result');
       if (!data || data.length === 0) {
@@ -162,7 +160,6 @@
       }).join('');
       table.innerHTML = html;
 
-      // 逐筆檢查：若有「條碼」與「條碼圖」欄，根據「條碼」生成圖片放到「條碼圖」
       table.querySelectorAll('tr').forEach(tr => {
         const tds = tr.querySelectorAll('td[data-col]');
         let barcodeValue = null;
@@ -171,19 +168,10 @@
         tds.forEach(td => {
           const col = td.getAttribute('data-col');
           const value = td.textContent.trim();
-
-          // 儲存條碼數字
-          if (col === "條碼" || /barcode$/i.test(col)) {
-            barcodeValue = value;
-          }
-
-          // 找出條碼圖欄位
-          if (col === "條碼圖" || /barcode_img|barcode_image/i.test(col)) {
-            barcodeImgCell = td;
-          }
+          if (col === "條碼" || /barcode$/i.test(col)) barcodeValue = value;
+          if (col === "條碼圖" || /barcode_img|barcode_image/i.test(col)) barcodeImgCell = td;
         });
 
-        // 如果條碼圖欄有網址（已存在圖片） → 保留原圖片
         if (barcodeImgCell) {
           const original = barcodeImgCell.textContent.trim();
           barcodeImgCell.textContent = '';
@@ -193,16 +181,34 @@
             img.alt = '條碼圖';
             barcodeImgCell.appendChild(img);
           } else if (barcodeValue) {
-            // 沒有原圖就自動產生
             const svg = createBarcodeFromNumber(barcodeValue);
-            if (svg) {
-              barcodeImgCell.appendChild(svg);
-            } else {
-              barcodeImgCell.textContent = '(條碼無效)';
-            }
+            if (svg) barcodeImgCell.appendChild(svg);
+            else barcodeImgCell.textContent = '(條碼無效)';
           }
         }
       });
+    }
+
+    // ✅ 新增：將查詢結果轉成圖片並下載
+    async function downloadImage() {
+      const resultWrapper = document.getElementById("resultWrapper");
+      if (!resultWrapper || resultWrapper.innerText.includes("查詢中") || resultWrapper.innerText.includes("請輸入")) {
+        alert("請先查詢商品再下載圖片！");
+        return;
+      }
+
+      // 使用 html2canvas 轉成圖片
+      const canvas = await html2canvas(resultWrapper, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+
+      // 預覽與下載
+      const preview = confirm("是否要下載查詢結果圖片？");
+      if (preview) {
+        const link = document.createElement("a");
+        link.href = imgData;
+        link.download = "紅酒查詢結果.png";
+        link.click();
+      }
     }
   </script>
 </body>
