@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>紅酒品項查詢</title>
+<style>
+body {
+  font-family: "Microsoft JhengHei", sans-serif;
+  background-color: #faf8f5;
+  color: #333;
+  margin: 2em;
+  line-height: 1.6;
+}
+h1, h2 { color: #6b1e1e; }
+input, textarea, button {
+  font-size: 1em;
+  margin: 0.5em 0;
+  padding: 0.6em;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+button {
+  background-color: #6b1e1e;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover { background-color: #8a2a2a; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 1.5em;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background-color: #eee; }
+img { max-height: 80px; }
+</style>
+</head>
+<body>
+<h1>🍷 紅酒品項查詢</h1>
+
+<h2>單品項查詢</h2>
+<input type="text" id="single" placeholder="請輸入訂購編號">
+<button onclick="searchSingle()">查詢</button>
+
+<h2>多品項批次查詢</h2>
+<textarea id="multi" rows="4" placeholder="可輸入多個訂購編號，用逗號、空白或換行分隔"></textarea>
+<button onclick="searchMulti()">批次查詢</button>
+
+<div id="loading" style="display:none;">查詢中，請稍候...</div>
+<table id="result"></table>
+
+<script>
+// 改成你自己的 Apps Script 網址👇
+const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
+
+async function fetchData(order) {
+  document.getElementById('loading').style.display = 'block';
+  const res = await fetch(`${API_URL}?order=${encodeURIComponent(order)}`);
+  const data = await res.json();
+  document.getElementById('loading').style.display = 'none';
+  return data;
+}
+
+function renderTable(data) {
+  const table = document.getElementById('result');
+  if (!data || data.length === 0) {
+    table.innerHTML = '<tr><td>查無資料</td></tr>';
+    return;
+  }
+  const headers = Object.keys(data[0]);
+  table.innerHTML = `
+    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+    ${data.map(row => `<tr>${headers.map(h => 
+      h === '條碼圖' && row[h] 
+        ? `<td><img src="${row[h]}" alt="條碼圖"></td>` 
+        : `<td>${row[h] ?? ''}</td>`
+    ).join('')}</tr>`).join('')}
+  `;
+}
+
+async function searchSingle() {
+  const order = document.getElementById('single').value.trim();
+  if (!order) return alert('請輸入訂購編號');
+  const data = await fetchData(order);
+  renderTable(data);
+}
+
+async function searchMulti() {
+  const order = document.getElementById('multi').value.trim();
+  if (!order) return alert('請輸入至少一個訂購編號');
+  const data = await fetchData(order);
+  renderTable(data);
+}
+</script>
+</body>
+</html>
