@@ -1,316 +1,222 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>紅酒商品查詢系統</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>紅酒查詢系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     body {
-      font-family: "Microsoft JhengHei", sans-serif;
-      background: #faf7f5;
-      color: #333;
+      font-family: "Noto Sans TC", sans-serif;
+      background-color: #f9f4f2;
+      margin: 0;
+      padding: 20px;
       text-align: center;
-      padding: 15px;
+      color: #3b1e1e;
     }
-
     h1 {
-      color: #800000;
-      font-size: 1.6em;
-      margin-bottom: 10px;
+      color: #7b2e2e;
+      margin-bottom: 20px;
     }
-
     textarea {
-      width: 95%;
+      width: 90%;
+      max-width: 400px;
       height: 80px;
-      margin: 10px 0;
+      padding: 10px;
       font-size: 16px;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      resize: vertical;
+      border: 2px solid #7b2e2e;
+      border-radius: 10px;
+      resize: none;
     }
-
     button {
-      background: #800000;
+      background-color: #7b2e2e;
       color: white;
       border: none;
-      padding: 10px 18px;
-      font-size: 16px;
-      border-radius: 8px;
+      padding: 10px 20px;
+      margin: 10px;
+      border-radius: 10px;
       cursor: pointer;
-      margin: 6px;
+      font-size: 16px;
+      transition: 0.2s;
     }
-
     button:hover {
-      background: #a00000;
+      background-color: #a94444;
     }
-
-    .table-container {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      width: 100%;
-      margin-top: 15px;
-    }
-
     table {
+      width: 100%;
+      max-width: 1200px;
+      margin: 30px auto;
       border-collapse: collapse;
-      min-width: 800px;
       background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin: 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
     }
-
     th, td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
       font-size: 14px;
-      word-break: break-word;
-      vertical-align: middle;
     }
-
     th {
-      background: #f0e0e0;
+      background-color: #7b2e2e;
+      color: white;
     }
-
-    img {
-      max-height: 60px;
-    }
-
-    .barcode-svg {
-      display: block;
-      margin: 0 auto;
-      width: 140px;
+    img.barcode {
+      width: 120px;
       height: 60px;
-      max-width: 100%;
     }
 
-    /* 手機版調整 */
-    @media (max-width: 600px) {
-      h1 { font-size: 1.3em; }
-      textarea { font-size: 14px; }
-      button { font-size: 14px; padding: 8px 12px; }
-      th, td { font-size: 12px; padding: 5px; }
-      img { max-height: 50px; }
-    }
-
-    /* ✅ 查詢中遮罩 */
-    #loadingOverlay {
+    /* 🔴 紅酒杯動畫 */
+    #loading {
+      display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255,255,255,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: bold;
-      color: #800000;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.85);
       z-index: 9999;
-      backdrop-filter: blur(4px);
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
     }
-    #loadingOverlay.show {
-      visibility: visible;
-      opacity: 1;
+    .wine-glass {
+      width: 80px;
+      height: 120px;
+      border: 4px solid #7b2e2e;
+      border-radius: 0 0 40px 40px;
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+    }
+    .wine-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 0%;
+      background: linear-gradient(to top, #7b2e2e, #b44);
+      animation: fillWine 2s infinite alternate ease-in-out;
+    }
+    @keyframes fillWine {
+      0% { height: 0%; }
+      100% { height: 80%; }
+    }
+    #loading p {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #7b2e2e;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      table { font-size: 12px; }
+      th, td { padding: 6px; }
+      img.barcode { width: 100px; height: 50px; }
     }
   </style>
 </head>
 <body>
   <h1>🍷 紅酒商品查詢系統</h1>
-  <p>請輸入一個或多個訂購編號（可用逗號、空白或換行分隔）：</p>
-  <textarea id="orderInput" placeholder="例如：01-01 或多筆 01-01, 05-01"></textarea><br>
-  <button onclick="search()">查詢</button>
-  <button onclick="downloadImage()">下載結果圖片</button>
+  <textarea id="orderInput" placeholder="例如：01-01 或多筆 01-01, 03-01"></textarea><br>
+  <button type="button" onclick="search()">查詢</button>
+  <button type="button" onclick="downloadImage()">下載結果圖片</button>
 
-  <div id="resultWrapper" class="table-container">
-    <table id="result">
-      <tr><td>請輸入訂購編號後按下查詢</td></tr>
-    </table>
+  <div id="loading">
+    <div class="wine-glass">
+      <div class="wine-fill"></div>
+    </div>
+    <p>資料查詢中，請稍候...</p>
   </div>
 
-  <!-- ✅ 查詢中浮層 -->
-  <div id="loadingOverlay">🔍 資料查詢中，請稍後...</div>
-
-  <!-- JS Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvg@4.0.1/lib/umd.min.js"></script>
+  <div id="result"></div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-    function showLoading(show) {
-      const overlay = document.getElementById("loadingOverlay");
-      if (show) overlay.classList.add("show");
-      else overlay.classList.remove("show");
-    }
-
     async function search() {
-      const input = document.getElementById('orderInput').value.trim();
-      if (!input) {
+      const orderInput = document.getElementById("orderInput").value.trim();
+      const resultDiv = document.getElementById("result");
+      const loading = document.getElementById("loading");
+
+      if (!orderInput) {
         alert("請輸入訂購編號！");
         return;
       }
 
-      document.getElementById('result').innerHTML = "<tr><td>查詢中...</td></tr>";
-      showLoading(true);
+      resultDiv.innerHTML = "";
+      loading.style.display = "flex"; // 顯示紅酒杯動畫
 
       try {
-        const res = await fetch(`${API_URL}?order=${encodeURIComponent(input)}`);
-        const data = await res.json();
-        renderTable(data);
-      } catch (err) {
-        console.error(err);
-        document.getElementById('result').innerHTML = "<tr><td>查詢失敗，請稍後再試。</td></tr>";
-      } finally {
-        showLoading(false);
-      }
-    }
+        const response = await fetch(`${API_URL}?order=${encodeURIComponent(orderInput)}`);
+        const data = await response.json();
 
-    function computeEAN13Checksum(code12) {
-      if (!/^\d{12}$/.test(code12)) return null;
-      let sum = 0;
-      for (let i = 0; i < 12; i++) {
-        const digit = parseInt(code12.charAt(i), 10);
-        sum += (i % 2 === 0) ? digit : digit * 3;
-      }
-      const mod = sum % 10;
-      return mod === 0 ? "0" : String(10 - mod);
-    }
-
-    function ensureEAN13(code) {
-      let raw = String(code || '').replace(/\s+/g, '');
-      if (!/^\d+$/.test(raw)) return null;
-      if (raw.length < 12) raw = raw.padStart(12, '0');
-      if (raw.length > 13) raw = raw.slice(0, 13);
-      if (raw.length === 12) return raw + computeEAN13Checksum(raw);
-      if (raw.length === 13) {
-        const body = raw.slice(0, 12);
-        return body + computeEAN13Checksum(body);
-      }
-      return null;
-    }
-
-    function createBarcodeFromNumber(code) {
-      const ean = ensureEAN13(code);
-      if (!ean) return null;
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.classList.add('barcode-svg');
-      try {
-        JsBarcode(svg, ean, {
-          format: "ean13",
-          displayValue: true,
-          fontSize: 12,
-          width: 2,
-          height: 50,
-          margin: 4
-        });
-        return svg;
-      } catch {
-        return null;
-      }
-    }
-
-    function renderTable(data) {
-      const table = document.getElementById('result');
-      if (!data || data.length === 0) {
-        table.innerHTML = "<tr><td>查無資料</td></tr>";
-        return;
-      }
-
-      const headers = Object.keys(data[0]);
-      let html = "<tr>" + headers.map(h => `<th>${h}</th>`).join('') + "</tr>";
-      html += data.map(row => {
-        return "<tr>" + headers.map(h => `<td data-col='${h}'>${row[h] ?? ''}</td>`).join('') + "</tr>";
-      }).join('');
-      table.innerHTML = html;
-
-      table.querySelectorAll('tr').forEach(tr => {
-        const tds = tr.querySelectorAll('td[data-col]');
-        let barcodeValue = null;
-        let barcodeImgCell = null;
-
-        tds.forEach(td => {
-          const col = td.getAttribute('data-col');
-          const value = td.textContent.trim();
-          if (col === "條碼") barcodeValue = value;
-          if (col === "條碼圖") barcodeImgCell = td;
-        });
-
-        if (barcodeImgCell) {
-          const original = barcodeImgCell.textContent.trim();
-          barcodeImgCell.textContent = '';
-          if (original.startsWith('http')) {
-            const img = document.createElement('img');
-            img.src = original;
-            img.alt = '條碼圖';
-            barcodeImgCell.appendChild(img);
-          } else if (barcodeValue) {
-            const svg = createBarcodeFromNumber(barcodeValue);
-            if (svg) barcodeImgCell.appendChild(svg);
-            else barcodeImgCell.textContent = '(條碼無效)';
-          }
+        if (data.error) {
+          resultDiv.innerHTML = `<p style="color:red">${data.error}</p>`;
+          loading.style.display = "none";
+          return;
         }
-      });
-    }
 
-    async function convertSVGtoImage() {
-      const svgs = document.querySelectorAll("svg.barcode-svg");
-      for (const svg of svgs) {
-        const svgString = new XMLSerializer().serializeToString(svg);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const v = await Canvg.fromString(ctx, svgString);
-        canvas.width = svg.width.baseVal.value || 140;
-        canvas.height = svg.height.baseVal.value || 60;
-        await v.render();
-        const img = document.createElement("img");
-        img.src = canvas.toDataURL("image/png");
-        img.style.maxHeight = "60px";
-        svg.replaceWith(img);
+        if (data.length === 0) {
+          resultDiv.innerHTML = "<p>查無資料</p>";
+          loading.style.display = "none";
+          return;
+        }
+
+        let table = `<table><tr>`;
+        for (let key of Object.keys(data[0])) {
+          table += `<th>${key}</th>`;
+        }
+        table += `</tr>`;
+
+        data.forEach(item => {
+          table += `<tr>`;
+          for (let key in item) {
+            if (key === "條碼圖") {
+              const barcodeValue = item["條碼"];
+              const barcodeId = `barcode_${barcodeValue}`;
+              table += `<td><svg id="${barcodeId}" class="barcode"></svg></td>`;
+            } else {
+              table += `<td>${item[key] || ""}</td>`;
+            }
+          }
+          table += `</tr>`;
+        });
+        table += `</table>`;
+        resultDiv.innerHTML = table;
+
+        // ✅ 生成條碼圖案
+        data.forEach(item => {
+          const barcodeValue = item["條碼"];
+          if (barcodeValue) {
+            const barcodeId = `barcode_${barcodeValue}`;
+            JsBarcode(`#${barcodeId}`, barcodeValue, { format: "EAN13", displayValue: false });
+          }
+        });
+
+      } catch (err) {
+        resultDiv.innerHTML = "<p style='color:red'>查詢失敗，請稍後再試。</p>";
+        console.error(err);
+      } finally {
+        loading.style.display = "none";
       }
     }
 
     async function downloadImage() {
-      const wrapper = document.getElementById("resultWrapper");
-      if (!wrapper || wrapper.innerText.includes("查詢中") || wrapper.innerText.includes("請輸入")) {
-        alert("請先查詢商品再下載圖片！");
+      const resultDiv = document.getElementById("result");
+      if (!resultDiv.innerHTML.trim()) {
+        alert("請先查詢資料！");
         return;
       }
-
-      showLoading(true);
-      await convertSVGtoImage(); // ✅ 轉換所有條碼成圖片
-
-      await new Promise(r => setTimeout(r, 500));
-
-      const canvas = await html2canvas(wrapper, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff"
-      });
-
-      showLoading(false);
-
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#800000";
-      ctx.font = "bold 28px Microsoft JhengHei";
-      ctx.fillText("🍷 紅酒商品查詢結果", 40, 40);
-      ctx.font = "20px Microsoft JhengHei";
-      ctx.fillStyle = "#555";
-      ctx.fillText(new Date().toLocaleString(), 40, 70);
-
-      const imgData = canvas.toDataURL("image/png");
-      const confirmDownload = confirm("是否下載查詢結果圖片？");
-      if (confirmDownload) {
+      try {
+        const canvas = await html2canvas(resultDiv, { scale: 2, useCORS: true });
         const link = document.createElement("a");
-        link.href = imgData;
         link.download = "紅酒查詢結果.png";
+        link.href = canvas.toDataURL();
         link.click();
+      } catch (err) {
+        alert("下載圖片失敗，請稍後再試。");
+        console.error(err);
       }
     }
   </script>
 </body>
 </html>
-
