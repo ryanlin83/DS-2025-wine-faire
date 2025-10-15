@@ -73,10 +73,10 @@
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
   <script>
-    // 你的 Google Apps Script 網址
+    // ✅ 你的 Google Apps Script 網址
     const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-    // 查詢按鈕動作
+    // 🔍 查詢功能
     async function search() {
       const input = document.getElementById('orderInput').value.trim();
       if (!input) {
@@ -109,7 +109,7 @@
       return String(check);
     }
 
-    // 確保條碼為正確的 EAN-13
+    // 確保條碼為正確的 EAN-13 格式
     function ensureEAN13(code) {
       const raw = String(code || '').replace(/\s+/g, '');
       if (/^\d{13}$/.test(raw)) {
@@ -125,17 +125,13 @@
       return null;
     }
 
-    // 將 EAN-13 條碼繪製到儲存格中
-    function renderEAN13IntoCell(td, code) {
-      td.innerHTML = '';
-      const ean = ensureEAN13(String(code || ''));
-      if (!ean) {
-        td.textContent = code ?? '';
-        return;
-      }
+    // 產生條碼圖（根據條碼數字）
+    function createBarcodeFromNumber(code) {
+      const ean = ensureEAN13(code);
+      if (!ean) return null;
+
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.classList.add('barcode-svg');
-      td.appendChild(svg);
       try {
         JsBarcode(svg, ean, {
           format: "ean13",
@@ -145,8 +141,9 @@
           height: 50,
           margin: 4
         });
-      } catch (err) {
-        td.textContent = code;
+        return svg;
+      } catch {
+        return null;
       }
     }
 
@@ -165,30 +162,36 @@
       }).join('');
       table.innerHTML = html;
 
-      // 針對每個儲存格，處理條碼或圖片欄位
-      table.querySelectorAll('td[data-col]').forEach(td => {
-        const col = td.getAttribute('data-col');
-        const value = td.textContent || '';
-        td.textContent = ''; // 清空以利插入內容
+      // 逐欄處理（只在「條碼圖」欄中生成圖）
+      table.querySelectorAll('tr').forEach(tr => {
+        const tds = tr.querySelectorAll('td[data-col]');
+        let barcodeValue = null;
+        let barcodeCell = null;
 
-        if (/條碼圖|image/i.test(col)) {
-          if (value.startsWith('http') || value.startsWith('data:')) {
-            const img = document.createElement('img');
-            img.src = value;
-            img.alt = '條碼圖';
-            td.appendChild(img);
-          } else {
-            td.textContent = value;
+        tds.forEach(td => {
+          const col = td.getAttribute('data-col');
+          const value = td.textContent.trim();
+
+          if (/條碼$|barcode$/i.test(col)) {
+            // 條碼欄位保留數字
+            barcodeValue = value;
           }
-          return;
-        }
 
-        if (/條碼|barcode|EAN/i.test(col)) {
-          renderEAN13IntoCell(td, value);
-          return;
-        }
+          if (/條碼圖|barcode_img|barcode_image/i.test(col)) {
+            barcodeCell = td;
+          }
+        });
 
-        td.textContent = value;
+        // 若有條碼數字且有「條碼圖」欄位 → 產生條碼圖
+        if (barcodeValue && barcodeCell) {
+          barcodeCell.innerHTML = ''; // 清空原內容
+          const svg = createBarcodeFromNumber(barcodeValue);
+          if (svg) {
+            barcodeCell.appendChild(svg);
+          } else {
+            barcodeCell.textContent = '(條碼無效)';
+          }
+        }
       });
     }
   </script>
