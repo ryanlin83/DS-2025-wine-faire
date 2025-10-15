@@ -85,7 +85,7 @@
       margin: auto;
     }
 
-    /* 🔴 紅酒瓶倒酒動畫 */
+    /* 🍷 紅酒杯閃光漸層動畫 */
     #loading {
       display: none;
       position: fixed;
@@ -98,44 +98,15 @@
       flex-direction: column;
     }
 
-    .scene {
+    .wine-glass {
       position: relative;
-      width: 150px;
-      height: 180px;
-    }
-
-    .bottle {
-      position: absolute;
-      top: 0;
-      left: 40px;
-      width: 30px;
-      height: 100px;
-      background: linear-gradient(to bottom, #222, #444);
-      border-radius: 10px 10px 5px 5px;
-      transform-origin: bottom right;
-      animation: pourBottle 2s infinite ease-in-out;
-    }
-
-    .wine {
-      position: absolute;
-      left: 70px;
-      top: 80px;
-      width: 4px;
-      height: 0;
-      background: linear-gradient(to top, #7b2e2e, #a33);
-      border-radius: 2px;
-      animation: pourWine 2s infinite ease-in-out;
-    }
-
-    .glass {
-      position: absolute;
-      bottom: 0;
-      left: 45px;
-      width: 60px;
-      height: 80px;
-      border: 4px solid #7b2e2e;
-      border-radius: 0 0 40px 40px;
+      width: 120px;
+      height: 160px;
+      border: 5px solid #7b2e2e;
+      border-radius: 0 0 60px 60px;
       overflow: hidden;
+      background: rgba(255,255,255,0.2);
+      box-shadow: 0 0 10px rgba(123,46,46,0.3) inset;
     }
 
     .wine-fill {
@@ -143,27 +114,24 @@
       bottom: 0;
       width: 100%;
       height: 0%;
-      background: linear-gradient(to top, #7b2e2e, #b44);
-      animation: fillGlass 2s infinite alternate ease-in-out;
+      background: linear-gradient(180deg, #a02a2a, #7b2e2e, #4b1e1e);
+      background-size: 400% 400%;
+      animation: fillWine 3s infinite alternate ease-in-out, shimmer 2s linear infinite;
+      border-top: 1px solid rgba(255,255,255,0.5);
     }
 
-    @keyframes pourBottle {
-      0%, 100% { transform: rotate(0deg); }
-      50% { transform: rotate(-45deg); }
-    }
-
-    @keyframes pourWine {
-      0%, 100% { height: 0; }
-      50% { height: 60px; }
-    }
-
-    @keyframes fillGlass {
+    @keyframes fillWine {
       0% { height: 0%; }
-      100% { height: 60%; }
+      100% { height: 85%; }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
 
     #loading p {
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 18px;
       color: #7b2e2e;
       font-weight: bold;
@@ -185,12 +153,8 @@
   <button type="button" onclick="downloadImage()">下載結果圖片</button>
 
   <div id="loading">
-    <div class="scene">
-      <div class="bottle"></div>
-      <div class="wine"></div>
-      <div class="glass">
-        <div class="wine-fill"></div>
-      </div>
+    <div class="wine-glass">
+      <div class="wine-fill"></div>
     </div>
     <p>資料查詢中，請稍候...</p>
   </div>
