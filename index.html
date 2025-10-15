@@ -133,8 +133,10 @@
   <!-- ✅ 查詢中浮層 -->
   <div id="loadingOverlay">🔍 資料查詢中，請稍後...</div>
 
+  <!-- JS Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvg@4.0.1/lib/umd.min.js"></script>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
@@ -254,6 +256,23 @@
       });
     }
 
+    async function convertSVGtoImage() {
+      const svgs = document.querySelectorAll("svg.barcode-svg");
+      for (const svg of svgs) {
+        const svgString = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const v = await Canvg.fromString(ctx, svgString);
+        canvas.width = svg.width.baseVal.value || 140;
+        canvas.height = svg.height.baseVal.value || 60;
+        await v.render();
+        const img = document.createElement("img");
+        img.src = canvas.toDataURL("image/png");
+        img.style.maxHeight = "60px";
+        svg.replaceWith(img);
+      }
+    }
+
     async function downloadImage() {
       const wrapper = document.getElementById("resultWrapper");
       if (!wrapper || wrapper.innerText.includes("查詢中") || wrapper.innerText.includes("請輸入")) {
@@ -261,24 +280,18 @@
         return;
       }
 
-      await new Promise(r => setTimeout(r, 1000)); // 等待條碼渲染完成
+      showLoading(true);
+      await convertSVGtoImage(); // ✅ 轉換所有條碼成圖片
 
-      const oldOverflow = wrapper.style.overflowX;
-      const oldWidth = wrapper.style.width;
-      wrapper.style.overflowX = "visible";
-      wrapper.style.width = "auto";
+      await new Promise(r => setTimeout(r, 500));
 
       const canvas = await html2canvas(wrapper, {
         scale: 2,
         useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: wrapper.scrollWidth,
         backgroundColor: "#ffffff"
       });
 
-      wrapper.style.overflowX = oldOverflow;
-      wrapper.style.width = oldWidth;
+      showLoading(false);
 
       const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#800000";
