@@ -45,7 +45,6 @@
       background: #a00000;
     }
 
-    /* ✅ 手機可左右滑動表格 */
     .table-container {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -85,7 +84,6 @@
       height: auto;
     }
 
-    /* 手機版優化 */
     @media (max-width: 600px) {
       h1 { font-size: 1.3em; }
       textarea { font-size: 14px; }
@@ -98,7 +96,7 @@
 <body>
   <h1>🍷 紅酒商品查詢系統</h1>
   <p>請輸入一個或多個訂購編號（可用逗號、空白或換行分隔）：</p>
-  <textarea id="orderInput" placeholder="例如：A1001 或多筆 A1001, A1002"></textarea><br>
+  <textarea id="orderInput" placeholder="例如：01-01 或多筆 01-01, 02-01"></textarea><br>
   <button onclick="search()">查詢</button>
   <button onclick="downloadImage()">下載結果圖片</button>
 
@@ -228,14 +226,27 @@
         return;
       }
 
-      // 延遲一點確保圖片條碼載入完成
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 800)); // 確保條碼生成完成
 
+      // ✅ 暫時移除滾動限制，讓整張表格展開
+      const oldOverflow = wrapper.style.overflowX;
+      const oldWidth = wrapper.style.width;
+      wrapper.style.overflowX = "visible";
+      wrapper.style.width = "auto";
+
+      // 生成圖片
       const canvas = await html2canvas(wrapper, {
         scale: 2,
-        scrollY: -window.scrollY,
+        scrollX: 0,
+        scrollY: 0,
         useCORS: true,
+        windowWidth: wrapper.scrollWidth,
       });
+
+      // 恢復原狀
+      wrapper.style.overflowX = oldOverflow;
+      wrapper.style.width = oldWidth;
+
       const imgData = canvas.toDataURL("image/png");
       const confirmDownload = confirm("是否下載查詢結果圖片？");
       if (confirmDownload) {
