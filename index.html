@@ -1,76 +1,75 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</title>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     body {
       font-family: "Noto Sans TC", sans-serif;
-      background: #f6f4f3;
-      color: #333;
+      background-color: #faf6f3;
       text-align: center;
-      padding: 20px;
+      margin: 0;
+      padding: 0 10px;
     }
 
     header {
-      margin-bottom: 15px;
+      margin: 20px 0;
     }
 
     header img {
-      width: 120px;
+      width: 100%;
+      max-width: 800px;
       height: auto;
-      border-radius: 8px;
+      display: block;
+      margin: 0 auto 10px auto;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
     h1 {
-      font-size: 1.6em;
+      font-size: 1.8em;
       color: #6b0f1a;
-      margin-top: 10px;
+      margin-top: 5px;
+      font-weight: 700;
     }
 
-    textarea {
-      width: 90%;
-      max-width: 500px;
-      height: 80px;
+    input, textarea, button {
+      font-size: 1em;
       padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
+      margin: 8px;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      margin-bottom: 10px;
     }
 
     button {
       background-color: #8b0000;
       color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
-      margin: 5px;
+      border: none;
+      transition: background-color 0.2s;
     }
 
     button:hover {
-      background-color: #a52a2a;
+      background-color: #a60000;
     }
 
     table {
       border-collapse: collapse;
-      width: 95%;
       margin: 20px auto;
-      background-color: white;
-      border-radius: 10px;
+      width: 95%;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
     th, td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
-      font-size: 14px;
+      font-size: 0.95em;
+      word-break: break-word;
     }
 
     th {
@@ -78,125 +77,141 @@
       color: white;
     }
 
-    input.qty {
-      width: 60px;
-      text-align: center;
-      padding: 4px;
-    }
-
-    #loading {
-      display: none;
+    .loading {
       position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,0.9);
-      z-index: 9999;
-      justify-content: center;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(255,255,255,0.9);
+      display: flex;
       align-items: center;
+      justify-content: center;
       flex-direction: column;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
-    #loading video {
-      width: 180px;
-      border-radius: 12px;
-      margin-bottom: 10px;
+    .loading.active {
+      visibility: visible;
+      opacity: 1;
     }
 
-    footer {
-      margin-top: 15px;
-      color: #777;
-      font-size: 14px;
+    .note {
+      color: #a00;
+      font-size: 0.9em;
+    }
+
+    @media (max-width: 768px) {
+      table {
+        font-size: 0.85em;
+      }
+      header img {
+        max-width: 95%;
+      }
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="wine-logo.jpg" alt="Wine Logo" />
-    <h1>🍷 紅酒商品查詢系統　僅限「鼎山店」使用</h1>
+    <img src="wine-logo.jpg" alt="紅酒查詢系統 LOGO">
+    <h1>🍷 紅酒商品查詢系統　僅限鼎山店使用</h1>
   </header>
 
-  <textarea id="orderInput" placeholder="例如：01-01 或多筆 01-01, 03-01"></textarea><br/>
-  <button type="button" onclick="search()">查詢</button>
-  <button type="button" onclick="downloadImage()">查詢結果下載，另存圖片</button>
-
-  <p style="color:#a52a2a;font-weight:600;">為確保查詢系統的操作體驗，單次最多查詢支數請以5支為限。</p>
-
-  <div id="loading">
-    <video autoplay muted loop playsinline>
-      <source src="wine-loading.mp4" type="video/mp4" />
-      您的瀏覽器不支援影片播放。
-    </video>
-    <p>資料查詢中，請稍候...</p>
+  <div>
+    <textarea id="orderInput" rows="3" cols="40" placeholder="例如：01-01 或多筆 01-01, 03-01"></textarea><br>
+    <button onclick="fetchData()">查詢</button>
+    <button onclick="clearResults()">清空查詢</button>
+    <button onclick="downloadResult()">查詢結果下載，另存圖片</button>
+    <p class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以 5 支為限。</p>
   </div>
 
   <div id="result"></div>
 
-  <footer>
-    <p>© 鼎山店 紅酒商品查詢系統</p>
-  </footer>
+  <div class="loading" id="loading">
+    <video src="wine-loading.mp4" autoplay loop muted playsinline width="300"></video>
+    <p style="margin-top:10px; color:#6b0f1a;">資料查詢中，請稍候…</p>
+  </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-    async function search() {
-      const input = document.getElementById("orderInput").value.trim();
-      if (!input) {
+    async function fetchData() {
+      const orderInput = document.getElementById("orderInput").value.trim();
+      if (!orderInput) {
         alert("請輸入訂購編號");
         return;
       }
 
-      document.getElementById("loading").style.display = "flex";
-      document.getElementById("result").innerHTML = "";
+      const orders = orderInput.split(/[\n,，\s]+/).filter(Boolean);
+      if (orders.length > 5) {
+        alert("單次最多查詢 5 支，請減少查詢筆數。");
+        return;
+      }
+
+      const loading = document.getElementById("loading");
+      loading.classList.add("active");
 
       try {
-        const response = await fetch(`${API_URL}?order=${encodeURIComponent(input)}`);
-        const data = await response.json();
-        if (!data || data.length === 0) {
-          document.getElementById("result").innerHTML = "<p>查無資料</p>";
-        } else {
-          displayResults(data);
-        }
+        const res = await fetch(`${scriptURL}?order=${encodeURIComponent(orderInput)}`);
+        const data = await res.json();
+        renderTable(data);
       } catch (err) {
-        document.getElementById("result").innerHTML = "<p>資料讀取失敗，請稍後再試。</p>";
+        alert("查詢時發生錯誤，請稍後再試。");
         console.error(err);
       } finally {
-        document.getElementById("loading").style.display = "none";
+        loading.classList.remove("active");
       }
     }
 
-    function displayResults(data) {
-      let html = "<table><tr>";
-      const headers = ["訂購編號","DM Page","Full code","商品名稱","商品位置","箱入數","價格","優惠活動","數量","條碼","條碼圖"];
-      headers.forEach(h => html += `<th>${h}</th>`);
-      html += "</tr>";
+    function renderTable(data) {
+      if (!data || data.length === 0) {
+        document.getElementById("result").innerHTML = "<p>查無資料，請確認訂購編號。</p>";
+        return;
+      }
 
-      data.forEach(row => {
+      let headers = Object.keys(data[0]);
+      const insertIndex = headers.indexOf("優惠活動") + 1;
+      headers.splice(insertIndex, 0, "數量");
+
+      let html = "<table><tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
+
+      data.forEach(item => {
         html += "<tr>";
         headers.forEach(h => {
-          if (h === "條碼圖") {
-            const barcode = String(row["條碼"] || "").trim();
-            html += `<td><img src="https://barcodeapi.org/api/EAN13/${barcode}" alt="barcode" style="height:50px;"></td>`;
-          } else if (h === "數量") {
-            html += `<td><input class="qty" type="number" min="0" placeholder="0"></td>`;
+          if (h === "數量") {
+            html += `<td><input type='number' min='0' placeholder='輸入數量' style='width:80px;'></td>`;
+          } else if (h === "條碼圖") {
+            const code = item["條碼"];
+            html += `<td><img src="https://barcodeapi.org/api/ean13/${code}" alt="${code}" style="height:60px;"></td>`;
           } else {
-            html += `<td>${row[h] || ""}</td>`;
+            html += `<td>${item[h] ?? ""}</td>`;
           }
         });
         html += "</tr>";
       });
+
       html += "</table>";
       document.getElementById("result").innerHTML = html;
     }
 
-    async function downloadImage() {
-      const result = document.getElementById("result");
-      if (!result.innerHTML.trim()) {
-        alert("請先查詢資料後再下載。");
+    function clearResults() {
+      document.getElementById("orderInput").value = "";
+      document.getElementById("result").innerHTML = "";
+    }
+
+    async function downloadResult() {
+      const resultDiv = document.getElementById("result");
+      if (!resultDiv.innerHTML.trim()) {
+        alert("請先查詢資料再下載。");
         return;
       }
-      const canvas = await html2canvas(result, { scale: 2, useCORS: true });
+
+      const canvas = await html2canvas(resultDiv, { scale: 2, useCORS: true });
       const link = document.createElement("a");
       link.download = "紅酒商品查詢結果.png";
-      link.href = canvas.toDataURL();
+      link.href = canvas.toDataURL("image/png");
       link.click();
     }
   </script>
