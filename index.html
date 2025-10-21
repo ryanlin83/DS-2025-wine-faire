@@ -19,7 +19,7 @@
 
     header img {
       width: 100%;
-      max-width: 900px;
+      max-width: 1000px;
       height: auto;
       display: block;
       margin: 0 auto 10px auto;
@@ -28,7 +28,7 @@
     }
 
     h1 {
-      font-size: 1.8em;
+      font-size: 1.9em;
       color: #6b0f1a;
       margin-top: 5px;
       font-weight: 700;
@@ -208,19 +208,27 @@
         return;
       }
 
+      // ⚡ 先開分頁，避免被瀏覽器封鎖
+      const newTab = window.open("about:blank", "_blank");
+
+      // 顯示等待畫面
+      newTab.document.write(`
+        <title>生成查詢圖片中...</title>
+        <body style="font-family:'Noto Sans TC';display:flex;align-items:center;justify-content:center;height:100vh;background:#faf6f3;color:#6b0f1a;">
+          <p>圖片生成中，請稍候...</p>
+        </body>
+      `);
+
+      // 生成圖片
       const canvas = await html2canvas(resultDiv, { scale: 2, useCORS: true });
       const imageData = canvas.toDataURL("image/png");
 
-      // 在新分頁中開啟圖片預覽 + 回首頁按鈕
-      const newTab = window.open();
-      newTab.document.write(`
-        <title>查詢結果圖片預覽</title>
-        <body style="margin:0;background:#faf6f3;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:'Noto Sans TC';">
-          <img src="${imageData}" style="max-width:95%;height:auto;margin:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
-          <p style="color:#6b0f1a;font-weight:600;">📸 長按圖片可儲存至相簿</p>
-          <button onclick="window.location.href='${window.location.href}'" style="margin-top:20px;background-color:#8b0000;color:white;padding:10px 20px;border:none;border-radius:8px;font-size:1em;cursor:pointer;">⬅ 回查詢頁面</button>
-        </body>
-      `);
+      // 更新新分頁內容
+      newTab.document.body.innerHTML = `
+        <img src="${imageData}" style="max-width:95%;height:auto;margin:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
+        <p style="color:#6b0f1a;font-weight:600;">📸 長按圖片可儲存至相簿</p>
+        <button onclick="window.close()" style="margin-top:20px;background-color:#8b0000;color:white;padding:10px 20px;border:none;border-radius:8px;font-size:1em;cursor:pointer;">⬅ 關閉預覽</button>
+      `;
     }
   </script>
 </body>
