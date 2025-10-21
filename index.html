@@ -1,283 +1,221 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🍷 紅酒商品查詢系統 - 鼎山店</title>
+
+<!-- JsBarcode (產生 SVG 條碼，用於避免跨域圖片問題) -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 <style>
-body {
-  font-family: "Microsoft JhengHei", sans-serif;
-  background: #f9f5f2;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
-
-/* ===== Banner ===== */
-header {
-  margin-top: 10px;
-}
-header img {
-  width: 280px;
-  max-width: 90%;
-  height: auto;
-  display: block;
-  margin: 10px auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  border-radius: 12px;
-}
-h1 {
-  color: #6b0f1a;
-  font-weight: 700;
-  font-size: 1.8em;
-  margin-bottom: 10px;
-}
-
-/* ===== Container ===== */
-.container {
-  background: #fff;
-  padding: 20px;
-  margin: 15px auto;
-  max-width: 1000px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-textarea {
-  width: 90%;
-  max-width: 600px;
-  height: 70px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  resize: none;
-  font-size: 1em;
-}
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-button {
-  background: #6b0f1a;
-  color: #fff;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background 0.2s;
-}
-button:hover {
-  background: #8b1e2d;
-}
-
-.note {
-  color: #555;
-  font-size: 0.9em;
-  margin-top: 8px;
-}
-
-/* ===== Loading Animation ===== */
-#loading {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.9);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-#loading video {
-  width: 180px;
-  max-width: 80%;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-/* ===== Table ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-  font-size: 0.95em;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-  vertical-align: middle;
-  word-break: break-word;
-}
-th {
-  background: #f2e5df;
-  color: #6b0f1a;
-  font-weight: bold;
-}
-.barcode-img {
-  width: auto;
-  height: auto;
-  max-height: 70px;
-  max-width: 100%;
-  object-fit: contain;
-}
-
-/* ===== Responsive for Mobile ===== */
-@media (max-width: 600px) {
-  header img {
-    width: 180px;
-  }
-  h1 {
-    font-size: 1.3em;
-  }
-  textarea {
-    height: 60px;
-  }
-  th, td {
-    font-size: 0.8em;
-    padding: 5px;
-  }
-}
+  body{font-family:"Microsoft JhengHei",sans-serif;margin:0;padding:0;background:#faf5f2;text-align:center}
+  header{margin:14px 0}
+  header img{width:280px;max-width:90%;height:auto;display:block;margin:0 auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+  h1{color:#6b0f1a;margin:8px 0;font-size:1.6rem}
+  .container{max-width:980px;margin:12px auto;background:#fff;padding:18px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.06)}
+  textarea{width:90%;max-width:640px;height:70px;padding:10px;border-radius:8px;border:1px solid #ccc}
+  .buttons{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px}
+  button{background:#6b0f1a;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer}
+  .note{color:#a00;margin-top:8px}
+  #loading{display:none;position:fixed;inset:0;background:rgba(255,255,255,0.9);z-index:9999;align-items:center;justify-content:center;flex-direction:column}
+  #loading video{width:180px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.2)}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:0.95rem}
+  th,td{border:1px solid #ddd;padding:8px;text-align:center;vertical-align:middle;word-break:break-word}
+  th{background:#f2e5df;color:#6b0f1a}
+  svg.barcode-svg{height:70px;width:auto;display:block;margin:0 auto}
+  @media(max-width:600px){header img{width:180px}h1{font-size:1.2rem}textarea{height:60px}th,td{font-size:0.85rem;padding:6px}}
 </style>
 </head>
 <body>
 
 <header>
-  <img src="wine-logo.jpg" alt="Wine Logo">
-  <h1>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</h1>
+  <img src="wine-logo.jpg" alt="logo">
+  <h1>🍷 紅酒商品查詢系統　僅限「鼎山店」使用</h1>
 </header>
 
 <div class="container">
-  <h3>請輸入訂購編號（例如：01-01 或多筆 01-01, 03-01）</h3>
+  <h3>請輸入訂購編號（例：01-01 或多筆 01-01, 03-01）</h3>
   <textarea id="orderInput" placeholder="輸入訂購編號..."></textarea>
+
   <div class="buttons">
     <button id="searchBtn">查詢</button>
     <button id="clearBtn">清空查詢</button>
     <button id="downloadBtn">查詢結果下載，另存圖片</button>
   </div>
-  <div class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以5支為限。</div>
+
+  <div class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以 5 支為限。</div>
+
   <div id="result"></div>
 </div>
 
-<!-- Loading 動畫 -->
 <div id="loading">
   <video autoplay muted loop playsinline>
-    <source src="wine-loading.mp4" type="video/mp4" />
+    <source src="wine-loading.mp4" type="video/mp4">
   </video>
-  <div style="color:#6b0f1a;font-weight:600;margin-top:10px;">資料查詢中，請稍候…</div>
+  <div style="color:#6b0f1a;font-weight:700;margin-top:10px">資料查詢中，請稍候…</div>
 </div>
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-const searchBtn = document.getElementById("searchBtn");
-const clearBtn = document.getElementById("clearBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const loading = document.getElementById("loading");
-const resultDiv = document.getElementById("result");
+const searchBtn = document.getElementById('searchBtn');
+const clearBtn = document.getElementById('clearBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const loading = document.getElementById('loading');
+const resultDiv = document.getElementById('result');
 
-searchBtn.addEventListener("click", async () => {
-  const input = document.getElementById("orderInput").value.trim();
-  if (!input) {
-    alert("請輸入至少一個訂購編號！");
-    return;
-  }
+searchBtn.addEventListener('click', async () => {
+  const raw = document.getElementById('orderInput').value.trim();
+  if (!raw) { alert('請輸入訂購編號'); return; }
+  const codes = raw.split(/[\n,，\s]+/).filter(Boolean);
+  if (codes.length > 5) { alert('每次最多查詢 5 筆'); return; }
 
-  const codes = input.split(/[\n,，\s]+/).filter(Boolean);
-  if (codes.length > 5) {
-    alert("⚠ 每次最多查詢 5 筆商品，請減少查詢數量。");
-    return;
-  }
-
-  loading.style.display = "flex";
-  resultDiv.innerHTML = "";
+  loading.style.display = 'flex';
+  resultDiv.innerHTML = '';
 
   try {
-    const res = await fetch(`${SCRIPT_URL}?order=${encodeURIComponent(codes.join(","))}`);
+    const res = await fetch(`${SCRIPT_URL}?order=${encodeURIComponent(codes.join(','))}`);
     const data = await res.json();
-
-    if (data.error || data.length === 0) {
-      resultDiv.innerHTML = `<p style="color:red;">查無資料，請確認訂購編號是否正確。</p>`;
-      loading.style.display = "none";
-      return;
-    }
-
-    let tableHTML = `<table><tr>`;
-    const headers = Object.keys(data[0]);
-    headers.forEach(h => tableHTML += `<th>${h}</th>`);
-    tableHTML += `<th>數量</th><th>條碼圖</th></tr>`;
-
-    data.forEach(item => {
-      tableHTML += `<tr>`;
-      headers.forEach(h => {
-        tableHTML += `<td>${item[h] || ""}</td>`;
-      });
-      tableHTML += `<td><input type="number" min="0" placeholder="0" style="width:60px;"></td>`;
-      const barcode = item["條碼"] 
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=60" alt="barcode">` 
-        : "";
-      tableHTML += `<td>${barcode}</td></tr>`;
-    });
-
-    tableHTML += `</table>`;
-    resultDiv.innerHTML = tableHTML;
-  } catch (e) {
-    console.error(e);
-    alert("查詢時發生錯誤，請稍後再試。");
+    renderTable(data);
+  } catch (err) {
+    console.error('fetch error', err);
+    alert('查詢發生錯誤，請稍後再試。');
   } finally {
-    loading.style.display = "none";
+    loading.style.display = 'none';
   }
 });
 
-clearBtn.addEventListener("click", () => {
-  document.getElementById("orderInput").value = "";
-  resultDiv.innerHTML = "";
+clearBtn.addEventListener('click', () => {
+  document.getElementById('orderInput').value = '';
+  resultDiv.innerHTML = '';
 });
 
+// Render table and create SVG barcodes in-page via JsBarcode
+function renderTable(data) {
+  if (!data || data.length === 0) {
+    resultDiv.innerHTML = '<p style="color:#c00">查無資料，請確認訂購編號。</p>';
+    return;
+  }
+  const headers = Object.keys(data[0]);
+  // Insert "數量" after "優惠活動" (if exists) else before 條碼
+  let insertIndex = headers.indexOf('優惠活動');
+  if (insertIndex === -1) insertIndex = headers.indexOf('條碼');
+  const displayHeaders = [...headers];
+  displayHeaders.splice(insertIndex + 1, 0, '數量');
+
+  let html = '<table><tr>' + displayHeaders.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach((row, idx) => {
+    html += '<tr>';
+    displayHeaders.forEach(h => {
+      if (h === '數量') {
+        html += `<td><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
+      } else if (h === '條碼圖') {
+        // placeholder SVG with unique id
+        const svgId = `barcode_svg_${Date.now()}_${idx}`;
+        html += `<td><svg id="${svgId}" class="barcode-svg"></svg></td>`;
+      } else {
+        html += `<td>${row[h] ?? ''}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+  resultDiv.innerHTML = html;
+
+  // Now generate SVG barcodes where applicable
+  data.forEach((row, idx) => {
+    // find matching svg id via querySelectorAll order
+    const svgs = resultDiv.querySelectorAll('svg.barcode-svg');
+    if (svgs[idx]) {
+      const code = String(row['條碼'] ?? '').trim();
+      try {
+        // Use CODE128 to be tolerant; if you need EAN13 ensure 13 digits
+        JsBarcode(svgs[idx], code || '000000000000', {
+          format: code.length === 13 ? 'ean13' : 'CODE128',
+          displayValue: true,
+          fontSize: 12,
+          height: 60,
+          width: 1.5,
+          margin: 6
+        });
+      } catch (e) {
+        console.warn('barcode render failed for', code, e);
+      }
+    }
+  });
+}
+
+// DOWNLOAD / PREVIEW - open new tab first to avoid popup block
 downloadBtn.addEventListener('click', async () => {
-  const resultContainer = document.getElementById('result');
-  if (!resultContainer.innerHTML.trim()) {
-    alert('請先查詢商品後再下載圖片！');
+  if (!resultDiv.innerHTML.trim()) { alert('請先查詢商品後再下載圖片！'); return; }
+
+  // 先開一個空分頁（同步，以避免被瀏覽器擋）
+  const previewTab = window.open('about:blank', '_blank');
+
+  if (!previewTab) {
+    alert('瀏覽器阻擋了跳出視窗，請允許彈跳視窗或改用桌機。');
     return;
   }
 
-  const overlay = document.createElement('div');
-  overlay.innerHTML = `
-    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:18px;color:#6b0f1a;">
-      生成查詢圖片中，請稍候…
-    </div>`;
-  document.body.appendChild(overlay);
+  // 在新分頁顯示 loading message
+  previewTab.document.write(`<html><head><title>生成中...</title></head><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial, sans-serif;"><div>圖片生成中，請稍候…</div></body></html>`);
 
   try {
-    const canvas = await html2canvas(resultContainer, {
-      scale: 2,
-      useCORS: true
-    });
-    const dataUrl = canvas.toDataURL('image/png');
-    document.body.removeChild(overlay);
+    // give browser a tiny tick to render the open tab
+    await new Promise(r => setTimeout(r, 50));
 
-    const newTab = window.open();
-    newTab.document.write(`
+    // prepare options: use actual scrollWidth to capture wide tables
+    const opt = {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      windowWidth: resultDiv.scrollWidth || document.documentElement.clientWidth,
+      windowHeight: resultDiv.scrollHeight || document.documentElement.clientHeight
+    };
+
+    const canvas = await html2canvas(resultDiv, opt);
+    const dataUrl = canvas.toDataURL('image/png');
+
+    // write final preview + close button
+    previewTab.document.open();
+    previewTab.document.write(`
       <html>
-      <head><title>查詢結果下載</title></head>
-      <body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-        <h3 style="color:#6b0f1a;font-family:sans-serif;">📸 打開圖片預覽 → 手動長按儲存</h3>
-        <img src="${dataUrl}" style="max-width:100%;height:auto;"/>
+      <head>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>查詢結果預覽</title>
+        <style>
+          body{margin:0;background:#faf6f3;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px;font-family:"Microsoft JhengHei",sans-serif}
+          img{max-width:100%;height:auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+          .bar{display:flex;gap:8px;align-items:center}
+          button{background:#6b0f1a;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+        </style>
+      </head>
+      <body>
+        <div class="bar"><button id="closeBtn">⬅ 關閉預覽</button><span style="color:#6b0f1a;font-weight:700">📸 長按圖片可儲存至相簿</span></div>
+        <img id="resultImg" src="${dataUrl}" alt="查詢結果" />
+        <script>
+          document.getElementById('closeBtn').addEventListener('click', ()=>{ window.close(); });
+        </script>
       </body>
       </html>
     `);
+    previewTab.document.close();
   } catch (err) {
-    console.error(err);
-    alert('生成圖片時發生錯誤，請再試一次！');
-    document.body.removeChild(overlay);
+    console.error('html2canvas error:', err);
+    // show friendly message inside previewTab if still open
+    try {
+      previewTab.document.open();
+      previewTab.document.write(`<body style="font-family:Arial,sans-serif;padding:20px;">生成圖片時發生錯誤：${String(err)}<br><br>可能原因：頁面含跨域圖片或載入未完成。請檢查條碼是否正確或改用桌機再試。</body>`);
+      previewTab.document.close();
+    } catch(e){}
+    alert('生成圖片時發生錯誤，請稍後再試，或在桌機上操作。');
   }
 });
 </script>
+
 </body>
 </html>
