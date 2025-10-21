@@ -1,235 +1,284 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</title>
-  <style>
-    body {
-      font-family: "Noto Sans TC", sans-serif;
-      background-color: #faf6f3;
-      text-align: center;
-      margin: 0;
-      padding: 0 10px;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+body {
+  font-family: "Microsoft JhengHei", sans-serif;
+  background: #f9f5f2;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
 
-    header {
-      margin: 20px 0;
-    }
+/* ===== Banner ===== */
+header {
+  margin-top: 10px;
+}
+header img {
+  width: 280px;
+  max-width: 90%;
+  height: auto;
+  display: block;
+  margin: 10px auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border-radius: 12px;
+}
+h1 {
+  color: #6b0f1a;
+  font-weight: 700;
+  font-size: 1.8em;
+  margin-bottom: 10px;
+}
 
-    header img {
-      width: 100%;
-      max-width: 1000px;
-      height: auto;
-      display: block;
-      margin: 0 auto 10px auto;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
+/* ===== Container ===== */
+.container {
+  background: #fff;
+  padding: 20px;
+  margin: 15px auto;
+  max-width: 1000px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
 
-    h1 {
-      font-size: 1.9em;
-      color: #6b0f1a;
-      margin-top: 5px;
-      font-weight: 700;
-    }
+textarea {
+  width: 90%;
+  max-width: 600px;
+  height: 70px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  resize: none;
+  font-size: 1em;
+}
 
-    input, textarea, button {
-      font-size: 1em;
-      padding: 10px;
-      margin: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+button {
+  background: #6b0f1a;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #8b1e2d;
+}
 
-    button {
-      background-color: #8b0000;
-      color: white;
-      cursor: pointer;
-      border: none;
-      transition: background-color 0.2s;
-    }
+.note {
+  color: #555;
+  font-size: 0.9em;
+  margin-top: 8px;
+}
 
-    button:hover {
-      background-color: #a60000;
-    }
+/* ===== Loading Animation ===== */
+#loading {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.9);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+#loading video {
+  width: 180px;
+  max-width: 80%;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
 
-    table {
-      border-collapse: collapse;
-      margin: 20px auto;
-      width: 95%;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
+/* ===== Table ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 0.95em;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 6px;
+  text-align: center;
+  vertical-align: middle;
+  word-break: break-word;
+}
+th {
+  background: #f2e5df;
+  color: #6b0f1a;
+  font-weight: bold;
+}
+.barcode-img {
+  height: 60px;
+  max-width: 100%;
+}
 
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-      font-size: 0.95em;
-      word-break: break-word;
-    }
-
-    th {
-      background-color: #6b0f1a;
-      color: white;
-    }
-
-    .loading {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(255,255,255,0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      z-index: 1000;
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .loading.active {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .note {
-      color: #a00;
-      font-size: 0.9em;
-    }
-
-    @media (max-width: 768px) {
-      table {
-        font-size: 0.85em;
-      }
-      header img {
-        max-width: 95%;
-      }
-    }
-  </style>
+/* ===== Responsive for Mobile ===== */
+@media (max-width: 600px) {
+  header img {
+    width: 180px;
+  }
+  h1 {
+    font-size: 1.3em;
+  }
+  textarea {
+    height: 60px;
+  }
+  th, td {
+    font-size: 0.8em;
+    padding: 4px;
+  }
+}
+</style>
 </head>
 <body>
-  <header>
-    <img src="wine-logo.jpg" alt="紅酒查詢系統 LOGO">
-    <h1>🍷 紅酒商品查詢系統　僅限鼎山店使用</h1>
-  </header>
 
-  <div>
-    <textarea id="orderInput" rows="3" cols="40" placeholder="例如：01-01 或多筆 01-01, 03-01"></textarea><br>
-    <button onclick="fetchData()">查詢</button>
-    <button onclick="clearResults()">清空查詢</button>
-    <button onclick="previewResult()">查詢結果下載，另存圖片</button>
-    <p class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以 5 支為限。</p>
+<header>
+  <img src="wine-logo.jpg" alt="Wine Logo">
+  <h1>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</h1>
+</header>
+
+<div class="container">
+  <h3>請輸入訂購編號（例如：01-01 或多筆 01-01, 03-01）</h3>
+  <textarea id="orderInput" placeholder="輸入訂購編號..."></textarea>
+  <div class="buttons">
+    <button id="searchBtn">查詢</button>
+    <button id="clearBtn">清空查詢</button>
+    <button id="downloadBtn">查詢結果下載，另存圖片</button>
   </div>
-
+  <div class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以5支為限。</div>
   <div id="result"></div>
+</div>
 
-  <div class="loading" id="loading">
-    <video src="wine-loading.mp4" autoplay loop muted playsinline width="300"></video>
-    <p style="margin-top:10px; color:#6b0f1a;">資料查詢中，請稍候…</p>
-  </div>
+<!-- Loading 動畫 -->
+<div id="loading">
+  <video autoplay muted loop playsinline>
+    <source src="wine-loading.mp4" type="video/mp4" />
+  </video>
+  <div style="color:#6b0f1a;font-weight:600;margin-top:10px;">資料查詢中，請稍候…</div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
 
-    async function fetchData() {
-      const orderInput = document.getElementById("orderInput").value.trim();
-      if (!orderInput) {
-        alert("請輸入訂購編號");
-        return;
-      }
+const searchBtn = document.getElementById("searchBtn");
+const clearBtn = document.getElementById("clearBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const loading = document.getElementById("loading");
+const resultDiv = document.getElementById("result");
 
-      const orders = orderInput.split(/[\n,，\s]+/).filter(Boolean);
-      if (orders.length > 5) {
-        alert("單次最多查詢 5 支，請減少查詢筆數。");
-        return;
-      }
+searchBtn.addEventListener("click", async () => {
+  const input = document.getElementById("orderInput").value.trim();
+  if (!input) {
+    alert("請輸入至少一個訂購編號！");
+    return;
+  }
 
-      const loading = document.getElementById("loading");
-      loading.classList.add("active");
+  const codes = input.split(/[\n,，\s]+/).filter(Boolean);
+  if (codes.length > 5) {
+    alert("⚠ 每次最多查詢 5 筆商品，請減少查詢數量。");
+    return;
+  }
 
-      try {
-        const res = await fetch(`${scriptURL}?order=${encodeURIComponent(orderInput)}`);
-        const data = await res.json();
-        renderTable(data);
-      } catch (err) {
-        alert("查詢時發生錯誤，請稍後再試。");
-        console.error(err);
-      } finally {
-        loading.classList.remove("active");
-      }
+  loading.style.display = "flex";
+  resultDiv.innerHTML = "";
+
+  try {
+    const res = await fetch(`${SCRIPT_URL}?order=${encodeURIComponent(codes.join(","))}`);
+    const data = await res.json();
+
+    if (data.error || data.length === 0) {
+      resultDiv.innerHTML = `<p style="color:red;">查無資料，請確認訂購編號是否正確。</p>`;
+      loading.style.display = "none";
+      return;
     }
 
-    function renderTable(data) {
-      if (!data || data.length === 0) {
-        document.getElementById("result").innerHTML = "<p>查無資料，請確認訂購編號。</p>";
-        return;
-      }
+    let tableHTML = `<table><tr>`;
+    const headers = Object.keys(data[0]);
+    headers.forEach(h => tableHTML += `<th>${h}</th>`);
+    tableHTML += `<th>數量</th><th>條碼圖</th></tr>`;
 
-      let headers = Object.keys(data[0]);
-      const insertIndex = headers.indexOf("優惠活動") + 1;
-      headers.splice(insertIndex, 0, "數量");
-
-      let html = "<table><tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>";
-
-      data.forEach(item => {
-        html += "<tr>";
-        headers.forEach(h => {
-          if (h === "數量") {
-            html += `<td><input type='number' min='0' placeholder='輸入數量' style='width:80px;'></td>`;
-          } else if (h === "條碼圖") {
-            const code = item["條碼"];
-            html += `<td><img src="https://barcodeapi.org/api/ean13/${code}" alt="${code}" style="height:60px;"></td>`;
-          } else {
-            html += `<td>${item[h] ?? ""}</td>`;
-          }
-        });
-        html += "</tr>";
+    data.forEach(item => {
+      tableHTML += `<tr>`;
+      headers.forEach(h => {
+        tableHTML += `<td>${item[h] || ""}</td>`;
       });
+      tableHTML += `<td><input type="number" min="0" placeholder="0" style="width:60px;"></td>`;
+      const barcode = item["條碼"] ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}" alt="barcode">` : "";
+      tableHTML += `<td>${barcode}</td></tr>`;
+    });
 
-      html += "</table>";
-      document.getElementById("result").innerHTML = html;
-    }
+    tableHTML += `</table>`;
+    resultDiv.innerHTML = tableHTML;
+  } catch (e) {
+    console.error(e);
+    alert("查詢時發生錯誤，請稍後再試。");
+  } finally {
+    loading.style.display = "none";
+  }
+});
 
-    function clearResults() {
-      document.getElementById("orderInput").value = "";
-      document.getElementById("result").innerHTML = "";
-    }
+clearBtn.addEventListener("click", () => {
+  document.getElementById("orderInput").value = "";
+  resultDiv.innerHTML = "";
+});
 
-    async function previewResult() {
-      const resultDiv = document.getElementById("result");
-      if (!resultDiv.innerHTML.trim()) {
-        alert("請先查詢資料再下載。");
-        return;
-      }
+downloadBtn.addEventListener('click', async () => {
+  const resultContainer = document.getElementById('result');
+  if (!resultContainer.innerHTML.trim()) {
+    alert('請先查詢商品後再下載圖片！');
+    return;
+  }
 
-      // ⚡ 先開分頁，避免被瀏覽器封鎖
-      const newTab = window.open("about:blank", "_blank");
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.innerHTML = `
+    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:18px;color:#6b0f1a;">
+      生成查詢圖片中，請稍候…
+    </div>`;
+  document.body.appendChild(loadingOverlay);
 
-      // 顯示等待畫面
-      newTab.document.write(`
-        <title>生成查詢圖片中...</title>
-        <body style="font-family:'Noto Sans TC';display:flex;align-items:center;justify-content:center;height:100vh;background:#faf6f3;color:#6b0f1a;">
-          <p>圖片生成中，請稍候...</p>
-        </body>
-      `);
+  try {
+    const scale = 2;
+    const canvas = await html2canvas(resultContainer, {
+      scale,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      useCORS: true,
+      windowWidth: resultContainer.scrollWidth,
+      windowHeight: resultContainer.scrollHeight
+    });
 
-      // 生成圖片
-      const canvas = await html2canvas(resultDiv, { scale: 2, useCORS: true });
-      const imageData = canvas.toDataURL("image/png");
+    const dataUrl = canvas.toDataURL('image/png');
+    document.body.removeChild(loadingOverlay);
 
-      // 更新新分頁內容
-      newTab.document.body.innerHTML = `
-        <img src="${imageData}" style="max-width:95%;height:auto;margin:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
-        <p style="color:#6b0f1a;font-weight:600;">📸 長按圖片可儲存至相簿</p>
-        <button onclick="window.close()" style="margin-top:20px;background-color:#8b0000;color:white;padding:10px 20px;border:none;border-radius:8px;font-size:1em;cursor:pointer;">⬅ 關閉預覽</button>
-      `;
-    }
-  </script>
+    const newTab = window.open();
+    newTab.document.write(`
+      <html>
+      <head><title>查詢結果下載</title></head>
+      <body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+        <h3 style="color:#6b0f1a;font-family:sans-serif;">📸 打開圖片預覽 → 手動長按儲存</h3>
+        <img src="${dataUrl}" style="max-width:100%;height:auto;"/>
+      </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error(err);
+    alert('生成圖片時發生錯誤，請再試一次！');
+    document.body.removeChild(loadingOverlay);
+  }
+});
+</script>
 </body>
 </html>
