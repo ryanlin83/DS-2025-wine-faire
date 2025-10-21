@@ -85,7 +85,7 @@
       margin: auto;
     }
 
-    /* 🍷 等待動畫樣式 */
+    /* 🎬 等待動畫容器 */
     #loading {
       display: none;
       position: fixed;
@@ -98,113 +98,15 @@
       flex-direction: column;
     }
 
-    .wine-scene {
-      position: relative;
+    #loading video {
       width: 200px;
-      height: 200px;
-    }
-
-    /* 紅酒瓶 */
-    .wine-bottle {
-      position: absolute;
-      left: 0;
-      top: 10px;
-      width: 60px;
-      height: 160px;
-      background: linear-gradient(180deg, #3b1e1e 0%, #5a2626 50%, #2a1a1a 100%);
-      border-radius: 15px 15px 10px 10px;
-      box-shadow: inset -5px 0 10px rgba(255,255,255,0.2);
-      transform-origin: bottom right;
-      animation: tiltBottle 3s ease-in-out infinite;
-    }
-
-    .bottle-neck {
-      position: absolute;
-      top: -20px;
-      left: 15px;
-      width: 30px;
-      height: 25px;
-      background: #3b1e1e;
-      border-radius: 10px 10px 3px 3px;
-    }
-
-    /* 紅酒流 */
-    .wine-stream {
-      position: absolute;
-      left: 70px;
-      top: 80px;
-      width: 8px;
-      height: 0;
-      background: linear-gradient(180deg, #8b0000, #5a1a1a);
-      border-radius: 4px;
-      animation: pourWine 3s ease-in-out infinite;
-    }
-
-    /* 酒杯 */
-    .wine-glass {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 100px;
-      height: 140px;
-      border: 4px solid #7b2e2e;
-      border-radius: 0 0 50px 50px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.4);
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    /* 酒液填充 */
-    .wine-fill {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 0;
-      background: linear-gradient(180deg, #b32b2b, #7b2e2e, #4b1e1e);
-      border-top: 1px solid rgba(255,255,255,0.5);
-      animation: fillGlass 3s ease-in-out infinite;
-    }
-
-    /* 液面波動 + 閃光 */
-    .wine-reflect {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 10px;
-      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.6), transparent 70%);
-      opacity: 0.7;
-      animation: shimmer 2s linear infinite, ripple 3s ease-in-out infinite;
-    }
-
-    @keyframes tiltBottle {
-      0%, 100% { transform: rotate(0deg); }
-      50% { transform: rotate(-35deg); }
-    }
-
-    @keyframes pourWine {
-      0%, 100% { height: 0; opacity: 0; }
-      40%, 60% { height: 70px; opacity: 1; }
-    }
-
-    @keyframes fillGlass {
-      0%, 100% { height: 0; }
-      50% { height: 85px; }
-    }
-
-    @keyframes shimmer {
-      0% { transform: translateX(-20px); opacity: 0.6; }
-      50% { transform: translateX(20px); opacity: 1; }
-      100% { transform: translateX(-20px); opacity: 0.6; }
-    }
-
-    @keyframes ripple {
-      0%, 100% { transform: scaleX(1); }
-      50% { transform: scaleX(1.05); }
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
     }
 
     #loading p {
-      margin-top: 220px;
+      margin-top: 15px;
       font-size: 18px;
       color: #7b2e2e;
       font-weight: bold;
@@ -214,7 +116,6 @@
       table { font-size: 12px; }
       th, td { padding: 6px; }
       td svg.barcode { width: 120px !important; height: 60px !important; }
-      .wine-scene { transform: scale(0.8); }
     }
   </style>
 </head>
@@ -226,18 +127,12 @@
   <button type="button" onclick="search()">查詢</button>
   <button type="button" onclick="downloadImage()">下載結果圖片</button>
 
+  <!-- 🎬 MP4等待動畫 -->
   <div id="loading">
-    <div class="wine-scene">
-      <div class="wine-bottle">
-        <div class="bottle-neck"></div>
-      </div>
-      <div class="wine-stream"></div>
-      <div class="wine-glass">
-        <div class="wine-fill">
-          <div class="wine-reflect"></div>
-        </div>
-      </div>
-    </div>
+    <video autoplay muted loop playsinline>
+      <source src="wine-loading.mp4" type="video/mp4">
+      您的瀏覽器不支援影片播放。
+    </video>
     <p>資料查詢中，請稍候...</p>
   </div>
 
@@ -297,7 +192,6 @@
         table += `</table>`;
         resultDiv.innerHTML = table;
 
-        // ✅ 生成條碼
         data.forEach(item => {
           const barcodeValue = item["條碼"];
           if (barcodeValue) {
