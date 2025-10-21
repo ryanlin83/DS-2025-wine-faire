@@ -110,7 +110,7 @@ table {
 }
 th, td {
   border: 1px solid #ddd;
-  padding: 6px;
+  padding: 8px;
   text-align: center;
   vertical-align: middle;
   word-break: break-word;
@@ -121,8 +121,11 @@ th {
   font-weight: bold;
 }
 .barcode-img {
-  height: 60px;
+  width: auto;
+  height: auto;
+  max-height: 70px;
   max-width: 100%;
+  object-fit: contain;
 }
 
 /* ===== Responsive for Mobile ===== */
@@ -138,7 +141,7 @@ th {
   }
   th, td {
     font-size: 0.8em;
-    padding: 4px;
+    padding: 5px;
   }
 }
 </style>
@@ -216,7 +219,9 @@ searchBtn.addEventListener("click", async () => {
         tableHTML += `<td>${item[h] || ""}</td>`;
       });
       tableHTML += `<td><input type="number" min="0" placeholder="0" style="width:60px;"></td>`;
-      const barcode = item["條碼"] ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}" alt="barcode">` : "";
+      const barcode = item["條碼"] 
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=60" alt="barcode">` 
+        : "";
       tableHTML += `<td>${barcode}</td></tr>`;
     });
 
@@ -242,26 +247,20 @@ downloadBtn.addEventListener('click', async () => {
     return;
   }
 
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.innerHTML = `
+  const overlay = document.createElement('div');
+  overlay.innerHTML = `
     <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:18px;color:#6b0f1a;">
       生成查詢圖片中，請稍候…
     </div>`;
-  document.body.appendChild(loadingOverlay);
+  document.body.appendChild(overlay);
 
   try {
-    const scale = 2;
     const canvas = await html2canvas(resultContainer, {
-      scale,
-      scrollX: 0,
-      scrollY: -window.scrollY,
-      useCORS: true,
-      windowWidth: resultContainer.scrollWidth,
-      windowHeight: resultContainer.scrollHeight
+      scale: 2,
+      useCORS: true
     });
-
     const dataUrl = canvas.toDataURL('image/png');
-    document.body.removeChild(loadingOverlay);
+    document.body.removeChild(overlay);
 
     const newTab = window.open();
     newTab.document.write(`
@@ -276,7 +275,7 @@ downloadBtn.addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     alert('生成圖片時發生錯誤，請再試一次！');
-    document.body.removeChild(loadingOverlay);
+    document.body.removeChild(overlay);
   }
 });
 </script>
