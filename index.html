@@ -169,21 +169,21 @@ th {
     flex: 0 0 40%;
   }
 
-  /* 條碼圖：靠左顯示文字，條碼整行置中放大 */
+  /* 條碼圖：整行置中放大顯示 */
   td[data-label="條碼圖"] {
     display: block !important;
-    text-align: left !important;
-    padding: 8px 12px;
+    text-align: center !important;
+    padding: 10px 0;
   }
   td[data-label="條碼圖"]::before {
     display: block;
-    text-align: left;
-    margin-bottom: 4px;
+    text-align: center;
+    margin-bottom: 6px;
   }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 90% !important;
-    height: 48px !important;
-    max-width: 260px !important;
+    width: 95% !important;
+    height: 72px !important; /* ✅ 放大條碼 */
+    max-width: 300px !important;
     object-fit: contain !important;
     display: block;
     margin: 0 auto;
