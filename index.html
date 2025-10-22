@@ -131,7 +131,7 @@ th {
 
 /* 條碼圖尺寸 */
 .barcode-img {
-  height: 36px; /* 桌機版 */
+  height: 54px; /* 桌機版放大 */
   max-width: 90%;
   object-fit: contain;
   display: block;
@@ -169,8 +169,8 @@ th {
     flex: 0 0 40%;
   }
   .barcode-img {
-    width: 70%; /* 縮小為原本的70% */
-    height: 25px; /* 原36px → 25px */
+    width: 70%;
+    height: 38px; /* 手機版放大 */
     margin: 5px auto 0;
   }
   input[type="number"] {
@@ -263,7 +263,7 @@ searchBtn.addEventListener("click", async () => {
 
       const code = item["條碼"] || "";
       const barcode = code
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${code}?height=36" alt="barcode">`
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${code}?height=54" alt="barcode">`
         : "";
       tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
     });
@@ -286,4 +286,3 @@ clearBtn.addEventListener("click", () => {
 </script>
 </body>
 </html>
-
