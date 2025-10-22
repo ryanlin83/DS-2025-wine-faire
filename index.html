@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🍷 紅酒商品查詢系統 - 鼎山店</title>
 
-<!-- JsBarcode & html2canvas -->
+<!-- JsBarcode (產生 SVG 條碼，用於避免跨域圖片問題) -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
@@ -42,7 +42,7 @@
   <div class="buttons">
     <button id="searchBtn">查詢</button>
     <button id="clearBtn">清空查詢</button>
-    <button id="downloadBtn">查詢結果下載，另存成圖片</button>
+    <button id="downloadBtn">查詢結果下載，另存圖片</button>
   </div>
 
   <div class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以 5 支為限。</div>
@@ -66,7 +66,6 @@ const downloadBtn = document.getElementById('downloadBtn');
 const loading = document.getElementById('loading');
 const resultDiv = document.getElementById('result');
 
-// 查詢功能
 searchBtn.addEventListener('click', async () => {
   const raw = document.getElementById('orderInput').value.trim();
   if (!raw) { alert('請輸入訂購編號'); return; }
@@ -88,20 +87,21 @@ searchBtn.addEventListener('click', async () => {
   }
 });
 
-// 清空查詢
 clearBtn.addEventListener('click', () => {
   document.getElementById('orderInput').value = '';
   resultDiv.innerHTML = '';
 });
 
-// 渲染表格
+// Render table and create SVG barcodes in-page via JsBarcode
 function renderTable(data) {
   if (!data || data.length === 0) {
     resultDiv.innerHTML = '<p style="color:#c00">查無資料，請確認訂購編號。</p>';
     return;
   }
-  const headers = Object.keys(data[0]).filter(h => h !== '條碼圖');
-  const insertIndex = headers.indexOf('優惠活動');
+  const headers = Object.keys(data[0]);
+  // Insert "數量" after "優惠活動" (if exists) else before 條碼
+  let insertIndex = headers.indexOf('優惠活動');
+  if (insertIndex === -1) insertIndex = headers.indexOf('條碼');
   const displayHeaders = [...headers];
   displayHeaders.splice(insertIndex + 1, 0, '數量');
 
@@ -111,8 +111,9 @@ function renderTable(data) {
     displayHeaders.forEach(h => {
       if (h === '數量') {
         html += `<td><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
-      } else if (h === '條碼') {
-        const svgId = `barcode_${Date.now()}_${idx}`;
+      } else if (h === '條碼圖') {
+        // placeholder SVG with unique id
+        const svgId = `barcode_svg_${Date.now()}_${idx}`;
         html += `<td><svg id="${svgId}" class="barcode-svg"></svg></td>`;
       } else {
         html += `<td>${row[h] ?? ''}</td>`;
@@ -123,52 +124,63 @@ function renderTable(data) {
   html += '</table>';
   resultDiv.innerHTML = html;
 
-  const svgs = resultDiv.querySelectorAll('svg.barcode-svg');
+  // Now generate SVG barcodes where applicable
   data.forEach((row, idx) => {
-    const code = String(row['條碼'] ?? '').trim();
+    // find matching svg id via querySelectorAll order
+    const svgs = resultDiv.querySelectorAll('svg.barcode-svg');
     if (svgs[idx]) {
+      const code = String(row['條碼'] ?? '').trim();
       try {
+        // Use CODE128 to be tolerant; if you need EAN13 ensure 13 digits
         JsBarcode(svgs[idx], code || '000000000000', {
           format: code.length === 13 ? 'ean13' : 'CODE128',
           displayValue: true,
           fontSize: 12,
           height: 60,
-          width: 2,
+          width: 1.5,
           margin: 6
         });
       } catch (e) {
-        console.warn('條碼生成失敗:', code, e);
+        console.warn('barcode render failed for', code, e);
       }
     }
   });
 }
 
-// 查詢結果下載
+// DOWNLOAD / PREVIEW - open new tab first to avoid popup block
 downloadBtn.addEventListener('click', async () => {
   if (!resultDiv.innerHTML.trim()) { alert('請先查詢商品後再下載圖片！'); return; }
 
+  // 先開一個空分頁（同步，以避免被瀏覽器擋）
   const previewTab = window.open('about:blank', '_blank');
+
   if (!previewTab) {
-    alert('瀏覽器阻擋了跳出視窗，請允許或改用桌機。');
+    alert('瀏覽器阻擋了跳出視窗，請允許彈跳視窗或改用桌機。');
     return;
   }
 
-  previewTab.document.write(`<html><head><title>生成中...</title></head><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;"><div>圖片生成中，請稍候…</div></body></html>`);
+  // 在新分頁顯示 loading message
+  previewTab.document.write(`<html><head><title>生成中...</title></head><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial, sans-serif;"><div>圖片生成中，請稍候…</div></body></html>`);
 
   try {
-    await new Promise(r => setTimeout(r, 100));
+    // give browser a tiny tick to render the open tab
+    await new Promise(r => setTimeout(r, 50));
+
+    // prepare options: use actual scrollWidth to capture wide tables
     const opt = {
       scale: 2,
       useCORS: true,
+      allowTaint: false,
       scrollX: 0,
       scrollY: -window.scrollY,
-      windowWidth: resultDiv.scrollWidth,
-      windowHeight: resultDiv.scrollHeight
+      windowWidth: resultDiv.scrollWidth || document.documentElement.clientWidth,
+      windowHeight: resultDiv.scrollHeight || document.documentElement.clientHeight
     };
 
     const canvas = await html2canvas(resultDiv, opt);
     const dataUrl = canvas.toDataURL('image/png');
 
+    // write final preview + close button
     previewTab.document.open();
     previewTab.document.write(`
       <html>
@@ -183,53 +195,24 @@ downloadBtn.addEventListener('click', async () => {
         </style>
       </head>
       <body>
-        <div class="bar"><button id="closeBtn">⬅ 關閉預覽</button><span style="color:#6b0f1a;font-weight:700">📸 打開圖片預覽 → 手動長按儲存</span></div>
+        <div class="bar"><button id="closeBtn">⬅ 關閉預覽</button><span style="color:#6b0f1a;font-weight:700">📸 長按圖片可儲存至相簿</span></div>
         <img id="resultImg" src="${dataUrl}" alt="查詢結果" />
-        <script>document.getElementById('closeBtn').addEventListener('click',()=>window.close());</script>
+        <script>
+          document.getElementById('closeBtn').addEventListener('click', ()=>{ window.close(); });
+        </script>
       </body>
       </html>
     `);
     previewTab.document.close();
-
   } catch (err) {
-    console.error('html2canvas 錯誤:', err);
-    previewTab.document.open();
-    previewTab.document.write(`
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>生成圖片錯誤</title>
-        <style>
-          body {
-            font-family: "Microsoft JhengHei", sans-serif;
-            background: #fff3f3;
-            color: #900;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-            padding: 20px;
-          }
-          div {
-            background: #fff;
-            border: 2px solid #f5c2c2;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-          }
-        </style>
-      </head>
-      <body>
-        <div>
-          <h2>⚠️ 生成圖片時發生錯誤</h2>
-          <p>${String(err)}</p>
-          <p>請改用桌機或重新整理後再試一次。</p>
-        </div>
-      </body>
-      </html>
-    `);
-    previewTab.document.close();
+    console.error('html2canvas error:', err);
+    // show friendly message inside previewTab if still open
+    try {
+      previewTab.document.open();
+      previewTab.document.write(`<body style="font-family:Arial,sans-serif;padding:20px;">生成圖片時發生錯誤：${String(err)}<br><br>可能原因：頁面含跨域圖片或載入未完成。請檢查條碼是否正確或改用桌機再試。</body>`);
+      previewTab.document.close();
+    } catch(e){}
+    alert('生成圖片時發生錯誤，請稍後再試，或在桌機上操作。');
   }
 });
 </script>
