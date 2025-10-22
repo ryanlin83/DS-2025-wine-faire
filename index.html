@@ -120,11 +120,9 @@ th {
   color: #6b0f1a;
   font-weight: bold;
 }
-
-/* ==== 條碼尺寸：調整為較小但仍可掃描 ==== */
 .barcode-img {
-  width: 100px;   /* <- 縮小為 100px */
-  height: 50px;   /* <- 高 50px */
+  width: 120px;
+  height: 60px;
   object-fit: contain;
 }
 
@@ -231,25 +229,21 @@ searchBtn.addEventListener("click", async () => {
       return;
     }
 
-    // Render table -- remove separate "條碼圖" column (we will show barcode image AFTER '條碼' column)
     let tableHTML = `<table><thead><tr>`;
     const headers = Object.keys(data[0]);
     headers.forEach(h => tableHTML += `<th>${h}</th>`);
-    tableHTML += `<th>數量</th></tr></thead><tbody>`;
+    tableHTML += `<th>數量</th><th>條碼圖</th></tr></thead><tbody>`;
 
     data.forEach(item => {
       tableHTML += `<tr>`;
       headers.forEach(h => {
         tableHTML += `<td data-label="${h}">${item[h] || ""}</td>`;
-        // after showing 條碼 column text, we will append an image cell immediately after (no empty columns)
       });
-      // Append barcode image cell and quantity cell at end of row
-      const barcodeImg = item["條碼"]
-        ? `<img class="barcode-img" src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${item["條碼"]}&scale=2&includetext=1" alt="barcode">`
-        : "";
-      tableHTML += `<td data-label="條碼圖">${barcodeImg}</td>`;
       tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
-      tableHTML += `</tr>`;
+      const barcode = item["條碼"]
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=60" alt="barcode">`
+        : "";
+      tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
     });
 
     tableHTML += `</tbody></table>`;
@@ -267,7 +261,6 @@ clearBtn.addEventListener("click", () => {
   resultDiv.innerHTML = "";
 });
 
-// Download: open new tab first, then html2canvas the resultDiv into image and write to that tab
 downloadBtn.addEventListener('click', async () => {
   const resultContainer = document.getElementById('result');
   if (!resultContainer.innerHTML.trim()) {
@@ -275,65 +268,32 @@ downloadBtn.addEventListener('click', async () => {
     return;
   }
 
-  // open preview tab immediately to avoid popup blocking
-  const previewTab = window.open('about:blank', '_blank');
-  if (!previewTab) {
-    alert('瀏覽器阻擋了彈跳視窗，請允許彈跳視窗或改用桌機。');
-    return;
-  }
-  previewTab.document.write('<html><head><title>生成中...</title></head><body style="display:flex;align-items:center;justify-content:center;height:100vh;"><div>圖片生成中，請稍候…</div></body></html>');
-
-  // small delay to allow new tab to open/render
-  await new Promise(r => setTimeout(r, 80));
-
-  // show overlay in current page
   const overlay = document.createElement('div');
-  overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;color:#6b0f1a;font-weight:600;';
-  overlay.innerText = '生成查詢圖片中，請稍候…';
+  overlay.innerHTML = `
+    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:18px;color:#6b0f1a;">
+      生成查詢圖片中，請稍候…
+    </div>`;
   document.body.appendChild(overlay);
 
   try {
-    // use result's scrollWidth to capture full width
-    const opt = {
-      scale: 2,
-      useCORS: true,
-      scrollX: 0,
-      scrollY: -window.scrollY,
-      windowWidth: resultContainer.scrollWidth || document.documentElement.clientWidth,
-      windowHeight: resultContainer.scrollHeight || document.documentElement.clientHeight
-    };
-
-    const canvas = await html2canvas(resultContainer, opt);
+    const canvas = await html2canvas(resultContainer, { scale: 2, useCORS: true });
     const dataUrl = canvas.toDataURL('image/png');
+    document.body.removeChild(overlay);
 
-    // write final preview into previewTab
-    previewTab.document.open();
-    previewTab.document.write(`
+    const newTab = window.open();
+    newTab.document.write(`
       <html>
-      <head><meta name="viewport" content="width=device-width,initial-scale=1"><title>查詢結果預覽</title></head>
-      <body style="margin:0;background:#fff;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px;">
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button id="closeBtn" style="background:#6b0f1a;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;">⬅ 關閉預覽</button>
-          <span style="color:#6b0f1a;font-weight:700">📸 長按圖片可儲存到相簿</span>
-        </div>
-        <img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);" />
-        <script>document.getElementById('closeBtn').addEventListener('click', ()=>window.close());</script>
+      <head><title>查詢結果下載</title></head>
+      <body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+        <h3 style="color:#6b0f1a;font-family:sans-serif;">📸 打開圖片預覽 → 手動長按儲存</h3>
+        <img src="${dataUrl}" style="max-width:100%;height:auto;"/>
       </body>
       </html>
     `);
-    previewTab.document.close();
-
   } catch (err) {
-    console.error('html2canvas 錯誤:', err);
-    // show friendly error inside preview tab if possible
-    try {
-      previewTab.document.open();
-      previewTab.document.write(`<body style="font-family:Arial,padding:20px;">生成圖片時發生錯誤：${String(err)}<br><br>請改用桌機或確認網路後再試。</body>`);
-      previewTab.document.close();
-    } catch (e) {}
-    alert('生成圖片時發生錯誤，請再試一次或改用桌機！');
-  } finally {
-    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    console.error(err);
+    alert('生成圖片時發生錯誤，請再試一次！');
+    document.body.removeChild(overlay);
   }
 });
 </script>
