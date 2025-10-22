@@ -129,9 +129,9 @@ th {
   font-weight: bold;
 }
 
-/* 條碼圖尺寸 */
+/* 條碼圖尺寸（桌機版） */
 .barcode-img {
-  height: 54px; /* 桌機版放大 */
+  height: 54px;
   max-width: 90%;
   object-fit: contain;
   display: block;
@@ -168,11 +168,14 @@ th {
     color: #6b0f1a;
     flex: 0 0 40%;
   }
-  .barcode-img {
-    width: 70%;
-    height: 38px; /* 手機版放大 */
-    margin: 5px auto 0;
+
+  /* 手機條碼放大＋覆蓋桌機設定 */
+  td img.barcode-img {
+    width: 80%;
+    height: 54px !important;
+    margin: 8px auto 0;
   }
+
   input[type="number"] {
     width: 80px;
   }
