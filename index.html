@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🍷 紅酒商品查詢系統 - 鼎山店</title>
 
-<!-- JsBarcode 用來產生可刷的 SVG 條碼 -->
+<!-- JsBarcode & html2canvas -->
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
@@ -66,6 +66,7 @@ const downloadBtn = document.getElementById('downloadBtn');
 const loading = document.getElementById('loading');
 const resultDiv = document.getElementById('result');
 
+// 查詢功能
 searchBtn.addEventListener('click', async () => {
   const raw = document.getElementById('orderInput').value.trim();
   if (!raw) { alert('請輸入訂購編號'); return; }
@@ -87,18 +88,19 @@ searchBtn.addEventListener('click', async () => {
   }
 });
 
+// 清空查詢
 clearBtn.addEventListener('click', () => {
   document.getElementById('orderInput').value = '';
   resultDiv.innerHTML = '';
 });
 
-// Render table and generate SVG barcodes in-page
+// 渲染表格
 function renderTable(data) {
   if (!data || data.length === 0) {
     resultDiv.innerHTML = '<p style="color:#c00">查無資料，請確認訂購編號。</p>';
     return;
   }
-  const headers = Object.keys(data[0]).filter(h => h !== '條碼圖'); // 移除條碼圖欄位
+  const headers = Object.keys(data[0]).filter(h => h !== '條碼圖');
   const insertIndex = headers.indexOf('優惠活動');
   const displayHeaders = [...headers];
   displayHeaders.splice(insertIndex + 1, 0, '數量');
@@ -121,7 +123,6 @@ function renderTable(data) {
   html += '</table>';
   resultDiv.innerHTML = html;
 
-  // Render barcodes
   const svgs = resultDiv.querySelectorAll('svg.barcode-svg');
   data.forEach((row, idx) => {
     const code = String(row['條碼'] ?? '').trim();
@@ -142,7 +143,7 @@ function renderTable(data) {
   });
 }
 
-// DOWNLOAD / PREVIEW
+// 查詢結果下載
 downloadBtn.addEventListener('click', async () => {
   if (!resultDiv.innerHTML.trim()) { alert('請先查詢商品後再下載圖片！'); return; }
 
@@ -155,8 +156,7 @@ downloadBtn.addEventListener('click', async () => {
   previewTab.document.write(`<html><head><title>生成中...</title></head><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;"><div>圖片生成中，請稍候…</div></body></html>`);
 
   try {
-    await new Promise(r => setTimeout(r, 100)); // 稍等確保渲染完成
-
+    await new Promise(r => setTimeout(r, 100));
     const opt = {
       scale: 2,
       useCORS: true,
@@ -190,51 +190,49 @@ downloadBtn.addEventListener('click', async () => {
       </html>
     `);
     previewTab.document.close();
-  } catch (err) {
-  console.error('html2canvas 錯誤:', err);
-  previewTab.document.open();
-  previewTab.document.write(`
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>生成圖片錯誤</title>
-      <style>
-        body {
-          font-family: "Microsoft JhengHei", sans-serif;
-          background: #fff3f3;
-          color: #900;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 100vh;
-          text-align: center;
-          padding: 20px;
-        }
-        div {
-          background: #fff;
-          border: 2px solid #f5c2c2;
-          padding: 20px;
-          border-radius: 10px;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-      </style>
-    </head>
-    <body>
-      <div>
-        <h2>⚠️ 生成圖片時發生錯誤</h2>
-        <p>${String(err)}</p>
-        <p>請改用桌機或重新整理後再試一次。</p>
-      </div>
-    </body>
-    </html>
-  `);
-  previewTab.document.close();
-}
 
+  } catch (err) {
+    console.error('html2canvas 錯誤:', err);
+    previewTab.document.open();
+    previewTab.document.write(`
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>生成圖片錯誤</title>
+        <style>
+          body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background: #fff3f3;
+            color: #900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 20px;
+          }
+          div {
+            background: #fff;
+            border: 2px solid #f5c2c2;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          }
+        </style>
+      </head>
+      <body>
+        <div>
+          <h2>⚠️ 生成圖片時發生錯誤</h2>
+          <p>${String(err)}</p>
+          <p>請改用桌機或重新整理後再試一次。</p>
+        </div>
+      </body>
+      </html>
+    `);
+    previewTab.document.close();
   }
 });
 </script>
 
 </body>
 </html>
-
