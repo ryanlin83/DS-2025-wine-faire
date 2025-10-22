@@ -128,10 +128,6 @@ th {
   color: #6b0f1a;
   font-weight: bold;
 }
-/* ✅ 修改：讓「條碼圖」欄標題靠左 */
-th:nth-last-child(1) {
-  text-align: left;
-}
 
 /* 桌機條碼尺寸 */
 .barcode-img {
@@ -140,6 +136,16 @@ th:nth-last-child(1) {
   object-fit: contain;
   display: block;
   margin: 0 auto;
+}
+
+/* ===== 數量輸入框樣式 ===== */
+input[type="number"] {
+  width: 90px;
+  font-size: 1.1em;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid #aaa;
+  padding: 4px;
 }
 
 /* ===== 手機版修正 ===== */
@@ -185,9 +191,8 @@ th:nth-last-child(1) {
     margin-bottom: 4px;
   }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 120% !important;
-    height: 200px !important;
-    max-width: 300px !important;
+    width: 110% !important;
+    height: 300px !important;
     object-fit: contain !important;
     display: block;
     margin: 0 auto;
@@ -214,9 +219,7 @@ th:nth-last-child(1) {
 </header>
 
 <div class="container">
-  <!-- ✅ 修改了這一行說明文字 -->
   <h3>請輸入訂購編號（例如：01-01 或多筆 04-06-02, 07-08-01）</h3>
-
   <textarea id="orderInput" placeholder="輸入訂購編號..."></textarea>
   <div class="buttons">
     <button id="searchBtn">查詢</button>
@@ -282,7 +285,7 @@ searchBtn.addEventListener("click", async () => {
       headers.forEach(h => {
         tableHTML += `<td data-label="${h}">${item[h] || ""}</td>`;
       });
-      tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
+      tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0"></td>`;
       const code = item["條碼"] || "";
       const barcode = code
         ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${code}?height=54" alt="barcode">`
@@ -308,6 +311,3 @@ clearBtn.addEventListener("click", () => {
 </script>
 </body>
 </html>
-
-
-
