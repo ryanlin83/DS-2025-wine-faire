@@ -1,301 +1,283 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</title>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<style>
-body {
-  font-family: "Microsoft JhengHei", sans-serif;
-  background: #f9f5f2;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
-
-/* ===== Banner ===== */
-header {
-  margin-top: 10px;
-}
-header img {
-  width: 300px;
-  max-width: 90%;
-  height: auto;
-  display: block;
-  margin: 10px auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  border-radius: 12px;
-}
-h1 {
-  color: #6b0f1a;
-  font-weight: 700;
-  font-size: 1.8em;
-  margin-bottom: 10px;
-}
-
-/* ===== Container ===== */
-.container {
-  background: #fff;
-  padding: 20px;
-  margin: 15px auto;
-  max-width: 1000px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-textarea {
-  width: 90%;
-  max-width: 600px;
-  height: 70px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  resize: none;
-  font-size: 1em;
-}
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-button {
-  background: #6b0f1a;
-  color: #fff;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background 0.2s;
-}
-button:hover {
-  background: #8b1e2d;
-}
-
-.note {
-  color: #555;
-  font-size: 0.9em;
-  margin-top: 8px;
-}
-
-/* ===== Loading Animation ===== */
-#loading {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.9);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-#loading video {
-  width: 180px;
-  max-width: 80%;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-/* ===== Table ===== */
-table {
-  width: 120%;
-  border-collapse: collapse;
-  margin-top: 15px;
-  font-size: 0.95em;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: center;
-  vertical-align: middle;
-  word-break: break-word;
-}
-th {
-  background: #f2e5df;
-  color: #6b0f1a;
-  font-weight: bold;
-}
-.barcode-img {
-  width: 160px;
-  height: auto;
-  object-fit: contain;
-}
-
-/* ===== Mobile Card Layout ===== */
-@media (max-width: 768px) {
-  table, thead, tbody, th, td, tr {
-    display: block;
-  }
-  thead {
-    display: none;
-  }
-  tr {
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    background: #fffaf9;
-  }
-  td {
-    text-align: left;
-    padding: 5px 10px;
-    border: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    color: #6b0f1a;
-    flex: 0 0 40%;
-  }
-  .barcode-img {
-    width: 100%;
-    height: auto;
-    margin-top: 5px;
-  }
-  input[type="number"] {
-    width: 80px;
-  }
-}
-</style>
-</head>
-<body>
-
-<header>
-  <img src="wine-logo.jpg" alt="Wine Logo">
-  <h1>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</h1>
-</header>
-
-<div class="container">
-  <h3>請輸入訂購編號（例如：01-01 或多筆 01-01, 03-01）</h3>
-  <textarea id="orderInput" placeholder="輸入訂購編號..."></textarea>
-  <div class="buttons">
-    <button id="searchBtn">查詢</button>
-    <button id="clearBtn">清空查詢</button>
-    <button id="downloadBtn">查詢結果下載，另存圖片</button>
-  </div>
-  <div class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以5支為限。</div>
-  <div id="result"></div>
-</div>
-
-<!-- Loading 動畫 -->
-<div id="loading">
-  <video autoplay muted loop playsinline>
-    <source src="wine-loading.mp4" type="video/mp4" />
-  </video>
-  <div style="color:#6b0f1a;font-weight:600;margin-top:10px;">資料查詢中，請稍候…</div>
-</div>
-
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
-
-const searchBtn = document.getElementById("searchBtn");
-const clearBtn = document.getElementById("clearBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const loading = document.getElementById("loading");
-const resultDiv = document.getElementById("result");
-
-searchBtn.addEventListener("click", async () => {
-  const input = document.getElementById("orderInput").value.trim();
-  if (!input) {
-    alert("請輸入至少一個訂購編號！");
-    return;
-  }
-
-  const codes = input.split(/[\n,，\s]+/).filter(Boolean);
-  if (codes.length > 5) {
-    alert("⚠ 每次最多查詢 5 筆商品，請減少查詢數量。");
-    return;
-  }
-
-  loading.style.display = "flex";
-  resultDiv.innerHTML = "";
-
-  try {
-    const res = await fetch(`${SCRIPT_URL}?order=${encodeURIComponent(codes.join(","))}`);
-    const data = await res.json();
-
-    if (data.error || data.length === 0) {
-      resultDiv.innerHTML = `<p style="color:red;">查無資料，請確認訂購編號是否正確。</p>`;
-      loading.style.display = "none";
-      return;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍷 紅酒商品查詢系統 僅限鼎山店使用</title>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #faf5f3;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      color: #5b1818;
     }
 
-    let tableHTML = `<table><thead><tr>`;
-    const headers = Object.keys(data[0]);
-    headers.forEach(h => tableHTML += `<th>${h}</th>`);
-    tableHTML += `<th>數量</th><th>條碼圖</th></tr></thead><tbody>`;
+    header {
+      background-color: #faf5f3;
+      padding: 20px;
+    }
 
-    data.forEach(item => {
-      tableHTML += `<tr>`;
-      headers.forEach(h => {
-        tableHTML += `<td data-label="${h}">${item[h] || ""}</td>`;
-      });
-      tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
-      const barcode = item["條碼"] 
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=70" alt="barcode">`
-        : "";
-      tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
+    header img {
+      width: 280px;
+      max-width: 80%;
+      height: auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: #7b2323;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1200px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      font-size: 1rem;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin: 5px;
+    }
+
+    button {
+      background-color: #7b2323;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #a13333;
+    }
+
+    .note {
+      color: #a13333;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      font-size: 0.9rem;
+      table-layout: auto;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    th {
+      background-color: #f5e8e8;
+      color: #6b0f0f;
+    }
+
+    td img {
+      display: block;
+      margin: auto;
+      width: 120px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    /* 手機卡片樣式 */
+    @media (max-width: 768px) {
+      table { display: none; }
+      .card-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        background-color: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        text-align: left;
+      }
+      .card img {
+        display: block;
+        margin: 10px auto;
+        width: 120px;
+        height: 60px;
+      }
+      .card h3 {
+        color: #7b2323;
+        margin-bottom: 5px;
+        font-size: 1rem;
+      }
+      .card p {
+        margin: 3px 0;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* 電腦表格模式 */
+    @media (min-width: 769px) {
+      .card-container { display: none; }
+    }
+
+    #loadingScreen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background-color: rgba(255,255,255,0.9);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #loadingScreen video {
+      width: 180px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+
+    #footer {
+      margin-top: 20px;
+      color: #7b2323;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="wine-logo.jpg" alt="紅酒 LOGO">
+    <h1>🍷 紅酒商品查詢系統　僅限鼎山店使用</h1>
+  </header>
+
+  <div class="container">
+    <input type="text" id="searchInput" placeholder="例如：01-01 或多筆 01-01, 03-01" />
+    <button id="searchBtn">查詢</button>
+    <button id="clearBtn">清空查詢</button>
+    <button id="downloadBtn">查詢結果下載，另存成圖片</button>
+    <p class="note">為確保查詢系統的操作體驗，單次最多查詢支數請以5支為限。</p>
+
+    <div id="tableContainer"></div>
+    <div id="cardContainer" class="card-container"></div>
+  </div>
+
+  <div id="loadingScreen">
+    <video autoplay loop muted playsinline>
+      <source src="wine-loading.mp4" type="video/mp4">
+    </video>
+    <p style="color:#7b2323;font-size:1rem;margin-top:10px;">資料查詢中，請稍候…</p>
+  </div>
+
+  <div id="footer">ryanlin83.github.io</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    const searchBtn = document.getElementById("searchBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const loadingScreen = document.getElementById("loadingScreen");
+
+    searchBtn.addEventListener("click", async () => {
+      const keywords = document.getElementById("searchInput").value.trim();
+      if (!keywords) return alert("請輸入查詢條件！");
+      const list = keywords.split(",").map(k => k.trim()).filter(k => k);
+      if (list.length > 5) return alert("單次最多查詢5支商品喔！");
+
+      loadingScreen.style.display = "flex";
+      await new Promise(r => setTimeout(r, 1200)); // 模擬讀取
+      loadingScreen.style.display = "none";
+
+      const sample = list.map((code, i) => ({
+        訂購編號: code,
+        DM頁數: "4",
+        eCODE: "102015900101",
+        商品名稱: `IGP卡斯康丘紅酒 #${i+1}`,
+        商品位置: `貨架${i+1}`,
+        每箱瓶數: 6,
+        價格: 420,
+        優惠活動: "SP 買2送1",
+        條碼: "3770013077227"
+      }));
+
+      renderTable(sample);
+      renderCards(sample);
     });
 
-    tableHTML += `</tbody></table>`;
-    resultDiv.innerHTML = tableHTML;
-  } catch (e) {
-    console.error(e);
-    alert("查詢時發生錯誤，請稍後再試。");
-  } finally {
-    loading.style.display = "none";
-  }
-});
+    clearBtn.addEventListener("click", () => {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("tableContainer").innerHTML = "";
+      document.getElementById("cardContainer").innerHTML = "";
+    });
 
-clearBtn.addEventListener("click", () => {
-  document.getElementById("orderInput").value = "";
-  resultDiv.innerHTML = "";
-});
+    function renderTable(data) {
+      let html = `<table><thead><tr>
+        <th>商品訂購編號</th><th>DM頁數</th><th>eCODE</th><th>商品名稱</th><th>商品位置</th><th>每箱瓶數</th><th>價格(瓶)</th><th>優惠活動</th><th>條碼圖</th><th>條碼</th><th>數量</th>
+      </tr></thead><tbody>`;
+      data.forEach(row => {
+        html += `<tr>
+          <td>${row.訂購編號}</td>
+          <td>${row.DM頁數}</td>
+          <td>${row.eCODE}</td>
+          <td>${row.商品名稱}</td>
+          <td>${row.商品位置}</td>
+          <td>${row.每箱瓶數}</td>
+          <td>${row.價格}</td>
+          <td>${row.優惠活動}</td>
+          <td><img src="https://bwipjs-api.metafloor.com/?bcid=ean13&text=${row.條碼}&scale=2&includetext" alt="barcode"></td>
+          <td>${row.條碼}</td>
+          <td><input type="number" min="0" style="width:70px;text-align:center;"></td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      document.getElementById("tableContainer").innerHTML = html;
+    }
 
-downloadBtn.addEventListener('click', async () => {
-  const resultContainer = document.getElementById('result');
-  if (!resultContainer.innerHTML.trim()) {
-    alert('請先查詢商品後再下載圖片！');
-    return;
-  }
+    function renderCards(data) {
+      let html = "";
+      data.forEach(row => {
+        html += `<div class="card">
+          <h3>${row.商品名稱}</h3>
+          <p><strong>訂購編號：</strong>${row.訂購編號}</p>
+          <p><strong>位置：</strong>${row.商品位置}</p>
+          <p><strong>價格：</strong>${row.價格}</p>
+          <p><strong>活動：</strong>${row.優惠活動}</p>
+          <img src="https://bwipjs-api.metafloor.com/?bcid=ean13&text=${row.條碼}&scale=2&includetext" alt="barcode">
+          <p><strong>條碼：</strong>${row.條碼}</p>
+          <p><strong>數量：</strong><input type="number" min="0" style="width:80px;text-align:center;"></p>
+        </div>`;
+      });
+      document.getElementById("cardContainer").innerHTML = html;
+    }
 
-  const overlay = document.createElement('div');
-  overlay.innerHTML = `
-    <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:18px;color:#6b0f1a;">
-      生成查詢圖片中，請稍候…
-    </div>`;
-  document.body.appendChild(overlay);
+    downloadBtn.addEventListener("click", async () => {
+      const table = document.querySelector("table");
+      const cards = document.querySelector(".card-container");
+      const target = window.innerWidth > 768 ? table : cards;
 
-  try {
-    const canvas = await html2canvas(resultContainer, { scale: 2, useCORS: true });
-    const dataUrl = canvas.toDataURL('image/png');
-    document.body.removeChild(overlay);
-
-    const newTab = window.open();
-    newTab.document.write(`
-      <html>
-      <head><title>查詢結果下載</title></head>
-      <body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-        <h3 style="color:#6b0f1a;font-family:sans-serif;">📸 打開圖片預覽 → 手動長按儲存</h3>
-        <img src="${dataUrl}" style="max-width:100%;height:auto;"/>
-      </body>
-      </html>
-    `);
-  } catch (err) {
-    console.error(err);
-    alert('生成圖片時發生錯誤，請再試一次！');
-    document.body.removeChild(overlay);
-  }
-});
-</script>
+      if (!target) return alert("請先查詢資料！");
+      try {
+        const canvas = await html2canvas(target, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL("image/png");
+        const previewTab = window.open("");
+        previewTab.document.write(`<img src="${imgData}" style="max-width:100%;height:auto;display:block;margin:auto;">`);
+        previewTab.document.title = "查詢結果預覽圖";
+      } catch (err) {
+        console.error("html2canvas 錯誤:", err);
+        alert("生成圖片時發生錯誤，請再試一次！");
+      }
+    });
+  </script>
 </body>
 </html>
