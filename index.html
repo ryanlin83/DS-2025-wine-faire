@@ -129,7 +129,7 @@ th {
   font-weight: bold;
 }
 
-/* 桌機條碼尺寸（默認） */
+/* 桌機條碼尺寸 */
 .barcode-img {
   height: 54px;
   max-width: 90%;
@@ -138,9 +138,8 @@ th {
   margin: 0 auto;
 }
 
-/* ===== Mobile Card Layout (修正條碼問題) ===== */
+/* ===== 手機版修正 ===== */
 @media (max-width: 768px) {
-  /* 把表格改成卡片式顯示 */
   table, thead, tbody, th, td, tr {
     display: block;
   }
@@ -155,7 +154,6 @@ th {
     background: #fffaf9;
   }
 
-  /* 大多數 td 保持左右排列 */
   td {
     text-align: left;
     padding: 6px 10px;
@@ -171,20 +169,24 @@ th {
     flex: 0 0 40%;
   }
 
-  /* --- 關鍵修正：條碼格獨立成一整行，不用 flex 排列 --- */
+  /* 條碼圖：靠左顯示文字，條碼整行置中放大 */
   td[data-label="條碼圖"] {
-    display: block !important;       /* 讓條碼整行顯示 */
+    display: block !important;
+    text-align: left !important;
     padding: 8px 12px;
-    text-align: center;
   }
-  /* 手機條碼明確設定，使用 !important 覆蓋其他規則 */
+  td[data-label="條碼圖"]::before {
+    display: block;
+    text-align: left;
+    margin-bottom: 4px;
+  }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 70% !important;           /* 手機寬度 70% */
-    height: 38px !important;         /* 手機高度 38px */
-    max-width: 220px !important;
+    width: 90% !important;
+    height: 48px !important;
+    max-width: 260px !important;
     object-fit: contain !important;
     display: block;
-    margin: 6px auto 0;
+    margin: 0 auto;
   }
 
   input[type="number"] {
@@ -237,7 +239,7 @@ const clearBtn = document.getElementById("clearBtn");
 const loading = document.getElementById("loading");
 const resultDiv = document.getElementById("result");
 
-// ===== 查詢功能 =====
+// 查詢功能
 searchBtn.addEventListener("click", async () => {
   const input = document.getElementById("orderInput").value.trim();
   if (!input) {
@@ -275,7 +277,6 @@ searchBtn.addEventListener("click", async () => {
         tableHTML += `<td data-label="${h}">${item[h] || ""}</td>`;
       });
       tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
-
       const code = item["條碼"] || "";
       const barcode = code
         ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${code}?height=54" alt="barcode">`
@@ -293,7 +294,7 @@ searchBtn.addEventListener("click", async () => {
   }
 });
 
-// ===== 清空查詢 =====
+// 清空查詢
 clearBtn.addEventListener("click", () => {
   document.getElementById("orderInput").value = "";
   resultDiv.innerHTML = "";
