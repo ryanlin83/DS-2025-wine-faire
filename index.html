@@ -19,8 +19,8 @@ header {
   margin-top: 10px;
 }
 header img {
-  width: 280px;
-  max-width: 90%;
+  width: 320px;
+  max-width: 95%;
   height: auto;
   display: block;
   margin: 10px auto;
@@ -107,6 +107,7 @@ table {
   border-collapse: collapse;
   margin-top: 15px;
   font-size: 0.95em;
+  table-layout: auto;
 }
 th, td {
   border: 1px solid #ddd;
@@ -121,17 +122,18 @@ th {
   font-weight: bold;
 }
 .barcode-img {
+  display: block;
+  margin: 5px auto;
+  height: 60px;
   width: auto;
-  height: auto;
-  max-height: 70px;
-  max-width: 100%;
+  max-width: 180px;
   object-fit: contain;
 }
 
 /* ===== Responsive for Mobile ===== */
 @media (max-width: 600px) {
   header img {
-    width: 180px;
+    width: 200px;
   }
   h1 {
     font-size: 1.3em;
@@ -142,6 +144,10 @@ th {
   th, td {
     font-size: 0.8em;
     padding: 5px;
+  }
+  .barcode-img {
+    max-width: 120px;
+    height: 50px;
   }
 }
 </style>
@@ -220,7 +226,7 @@ searchBtn.addEventListener("click", async () => {
       });
       tableHTML += `<td><input type="number" min="0" placeholder="0" style="width:60px;"></td>`;
       const barcode = item["條碼"] 
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=60" alt="barcode">` 
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=80" alt="barcode">` 
         : "";
       tableHTML += `<td>${barcode}</td></tr>`;
     });
@@ -268,7 +274,7 @@ downloadBtn.addEventListener('click', async () => {
       <head><title>查詢結果下載</title></head>
       <body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
         <h3 style="color:#6b0f1a;font-family:sans-serif;">📸 打開圖片預覽 → 手動長按儲存</h3>
-        <img src="${dataUrl}" style="max-width:100%;height:auto;"/>
+        <img src="${dataUrl}" style="max-width:95%;height:auto;margin:10px;"/>
       </body>
       </html>
     `);
