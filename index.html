@@ -128,6 +128,10 @@ th {
   color: #6b0f1a;
   font-weight: bold;
 }
+/* ✅ 修改：讓「條碼圖」欄標題靠左 */
+th:nth-last-child(1) {
+  text-align: left;
+}
 
 /* 桌機條碼尺寸 */
 .barcode-img {
@@ -169,38 +173,24 @@ th {
     flex: 0 0 40%;
   }
 
-  /* 條碼圖：整行置中放大顯示 */
+  /* 條碼圖：靠左顯示文字，條碼整行置中放大 */
   td[data-label="條碼圖"] {
     display: block !important;
-    text-align: center !important;
-    padding: 10px 0;
+    text-align: left !important;
+    padding: 8px 12px;
   }
   td[data-label="條碼圖"]::before {
     display: block;
-    text-align: center;
-    margin-bottom: 6px;
+    text-align: left;
+    margin-bottom: 4px;
   }
   td[data-label="條碼圖"] img.barcode-img {
     width: 95% !important;
-    height: 72px !important; /* ✅ 放大條碼 */
+    height: 80px !important;
     max-width: 300px !important;
     object-fit: contain !important;
     display: block;
     margin: 0 auto;
-  }
-
-  /* 自適應縮放：針對更小螢幕再放大一點 */
-  @media (max-width: 430px) {
-    td[data-label="條碼圖"] img.barcode-img {
-      height: 80px !important;
-      max-width: 320px !important;
-    }
-  }
-  @media (max-width: 360px) {
-    td[data-label="條碼圖"] img.barcode-img {
-      height: 88px !important;
-      max-width: 340px !important;
-    }
   }
 
   input[type="number"] {
@@ -224,7 +214,9 @@ th {
 </header>
 
 <div class="container">
-  <h3>請輸入訂購編號（例如：01-01 或多筆 01-01, 03-01）</h3>
+  <!-- ✅ 修改了這一行說明文字 -->
+  <h3>請輸入訂購編號（例如：01-01 或多筆 04-06-02, 07-08-01）</h3>
+
   <textarea id="orderInput" placeholder="輸入訂購編號..."></textarea>
   <div class="buttons">
     <button id="searchBtn">查詢</button>
