@@ -129,7 +129,7 @@ th {
   font-weight: bold;
 }
 
-/* 條碼圖尺寸（桌機版） */
+/* 桌機條碼尺寸（默認） */
 .barcode-img {
   height: 54px;
   max-width: 90%;
@@ -138,14 +138,14 @@ th {
   margin: 0 auto;
 }
 
-/* ===== Mobile Card Layout ===== */
+/* ===== Mobile Card Layout (修正條碼問題) ===== */
 @media (max-width: 768px) {
+  /* 把表格改成卡片式顯示 */
   table, thead, tbody, th, td, tr {
     display: block;
   }
-  thead {
-    display: none;
-  }
+  thead { display: none; }
+
   tr {
     margin-bottom: 15px;
     border: 1px solid #ccc;
@@ -154,9 +154,11 @@ th {
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     background: #fffaf9;
   }
+
+  /* 大多數 td 保持左右排列 */
   td {
     text-align: left;
-    padding: 5px 10px;
+    padding: 6px 10px;
     border: none;
     display: flex;
     justify-content: space-between;
@@ -169,16 +171,26 @@ th {
     flex: 0 0 40%;
   }
 
-  /* 手機條碼放大＋覆蓋桌機設定 */
-  td img.barcode-img {
-    width: 80%;
-    height: 54px !important;
-    margin: 8px auto 0;
+  /* --- 關鍵修正：條碼格獨立成一整行，不用 flex 排列 --- */
+  td[data-label="條碼圖"] {
+    display: block !important;       /* 讓條碼整行顯示 */
+    padding: 8px 12px;
+    text-align: center;
+  }
+  /* 手機條碼明確設定，使用 !important 覆蓋其他規則 */
+  td[data-label="條碼圖"] img.barcode-img {
+    width: 70% !important;           /* 手機寬度 70% */
+    height: 38px !important;         /* 手機高度 38px */
+    max-width: 220px !important;
+    object-fit: contain !important;
+    display: block;
+    margin: 6px auto 0;
   }
 
   input[type="number"] {
     width: 80px;
   }
+
   .tip {
     font-size: 1.15em;
     color: #a1122a;
