@@ -121,8 +121,8 @@ th {
   font-weight: bold;
 }
 .barcode-img {
-  width: 120px;
-  height: 60px;
+  width: 100px;
+  height: 45px;
   object-fit: contain;
 }
 
@@ -144,7 +144,7 @@ th {
   }
   td {
     text-align: left;
-    padding: 6px 10px;
+    padding: 5px 10px;
     border: none;
     display: flex;
     justify-content: space-between;
@@ -154,10 +154,10 @@ th {
     content: attr(data-label);
     font-weight: bold;
     color: #6b0f1a;
-    flex: 0 0 45%;
+    flex: 0 0 40%;
   }
   .barcode-img {
-    width: 100%;
+    width: 90px;
     height: auto;
     margin-top: 5px;
   }
@@ -241,7 +241,7 @@ searchBtn.addEventListener("click", async () => {
       });
       tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0" style="width:70px;"></td>`;
       const barcode = item["條碼"]
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=60" alt="barcode">`
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=45" alt="barcode">`
         : "";
       tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
     });
@@ -261,14 +261,14 @@ clearBtn.addEventListener("click", () => {
   resultDiv.innerHTML = "";
 });
 
-downloadBtn.addEventListener('click', async () => {
-  const resultContainer = document.getElementById('result');
+downloadBtn.addEventListener("click", async () => {
+  const resultContainer = document.getElementById("result");
   if (!resultContainer.innerHTML.trim()) {
-    alert('請先查詢商品後再下載圖片！');
+    alert("請先查詢商品後再下載圖片！");
     return;
   }
 
-  const overlay = document.createElement('div');
+  const overlay = document.createElement("div");
   overlay.innerHTML = `
     <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;font-size:18px;color:#6b0f1a;">
       生成查詢圖片中，請稍候…
@@ -277,23 +277,23 @@ downloadBtn.addEventListener('click', async () => {
 
   try {
     const canvas = await html2canvas(resultContainer, { scale: 2, useCORS: true });
-    const dataUrl = canvas.toDataURL('image/png');
-    document.body.removeChild(overlay);
-
-    const newTab = window.open();
-    newTab.document.write(`
+    const dataUrl = canvas.toDataURL("image/png");
+    const previewTab = window.open("", "_blank");
+    previewTab.document.open();
+    previewTab.document.write(`
       <html>
       <head><title>查詢結果下載</title></head>
-      <body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+      <body style="margin:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;">
         <h3 style="color:#6b0f1a;font-family:sans-serif;">📸 打開圖片預覽 → 手動長按儲存</h3>
         <img src="${dataUrl}" style="max-width:100%;height:auto;"/>
       </body>
-      </html>
-    `);
+      </html>`);
+    previewTab.document.close();
   } catch (err) {
-    console.error(err);
-    alert('生成圖片時發生錯誤，請再試一次！');
-    document.body.removeChild(overlay);
+    console.error("html2canvas 錯誤:", err);
+    alert("生成圖片時發生錯誤，請再試一次或改用桌機！");
+  } finally {
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }
 });
 </script>
