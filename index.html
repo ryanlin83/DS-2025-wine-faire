@@ -124,9 +124,9 @@ th {
 .barcode-img {
   display: block;
   margin: 5px auto;
-  height: 60px;
+  height: 90px;
   width: auto;
-  max-width: 180px;
+  max-width: 200px;
   object-fit: contain;
 }
 
@@ -146,8 +146,8 @@ th {
     padding: 5px;
   }
   .barcode-img {
-    max-width: 120px;
-    height: 50px;
+    max-width: 150px;
+    height: 70px;
   }
 }
 </style>
@@ -216,19 +216,25 @@ searchBtn.addEventListener("click", async () => {
 
     let tableHTML = `<table><tr>`;
     const headers = Object.keys(data[0]);
-    headers.forEach(h => tableHTML += `<th>${h}</th>`);
-    tableHTML += `<th>數量</th><th>條碼圖</th></tr>`;
+
+    headers.forEach(h => {
+      tableHTML += `<th>${h}</th>`;
+      if (h === "優惠活動") tableHTML += `<th>條碼圖</th>`;
+    });
+    tableHTML += `<th>數量</th></tr>`;
 
     data.forEach(item => {
       tableHTML += `<tr>`;
       headers.forEach(h => {
         tableHTML += `<td>${item[h] || ""}</td>`;
+        if (h === "優惠活動") {
+          const barcode = item["條碼"]
+            ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=90" alt="barcode">`
+            : "";
+          tableHTML += `<td>${barcode}</td>`;
+        }
       });
-      tableHTML += `<td><input type="number" min="0" placeholder="0" style="width:60px;"></td>`;
-      const barcode = item["條碼"] 
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${item["條碼"]}?height=80" alt="barcode">` 
-        : "";
-      tableHTML += `<td>${barcode}</td></tr>`;
+      tableHTML += `<td><input type="number" min="0" placeholder="0" style="width:60px;"></td></tr>`;
     });
 
     tableHTML += `</table>`;
