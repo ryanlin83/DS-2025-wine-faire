@@ -83,11 +83,11 @@ button:hover {
 }
 .tip {
   color: #8b1e2d;
-  font-size: 0.6em;
+  font-size: 0.55em; /* 字體縮小 */
   margin-top: 5px;
   font-weight: 600;
   text-align: center;
-  line-height: 1.6em;
+  line-height: 1.4em;
 }
 
 /* ===== Loading Animation ===== */
@@ -245,7 +245,7 @@ input[type="number"] {
   }
 
   .tip {
-    font-size: 2em;
+    font-size: 0.9em;
     color: #a1122a;
     font-weight: 700;
     margin-top: 10px;
@@ -298,20 +298,21 @@ const loading = document.getElementById("loading");
 const resultDiv = document.getElementById("result");
 let cachedData = null;
 
-// 新增查詢完成 modal
+// 查詢完成 modal
 const doneModal = document.getElementById("doneModal");
 const closeDoneModal = document.getElementById("closeDoneModal");
 const doneVideo = doneModal.querySelector("video");
 doneVideo.src = "wine-loading.mp4";
 
+// 手動關閉
 closeDoneModal.addEventListener("click", () => {
   doneModal.style.display = "none";
 });
 
-// 先快取 JSON 資料
+// 快取 JSON
 async function loadData() {
   if (cachedData) return cachedData;
-  const res = await fetch(JSON_URL + "?t=" + Date.now()); // 加時間避免舊快取
+  const res = await fetch(JSON_URL + "?t=" + Date.now());
   cachedData = await res.json();
   return cachedData;
 }
@@ -363,8 +364,13 @@ searchBtn.addEventListener("click", async () => {
     tableHTML += `</tbody></table>`;
     resultDiv.innerHTML = tableHTML;
 
-    // 查詢完成顯示提示框
+    // 顯示查詢完成提示框
     doneModal.style.display = "flex";
+
+    // 自動 3 秒後隱藏
+    setTimeout(() => {
+      doneModal.style.display = "none";
+    }, 3000);
 
   } catch (e) {
     console.error(e);
