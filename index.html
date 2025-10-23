@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>🍷 紅酒商品查詢系統 - 僅限鼎山店使用</title>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 body {
   font-family: "Microsoft JhengHei", sans-serif;
@@ -90,25 +89,6 @@ button:hover {
   line-height: 1.6em;
 }
 
-/* ===== Loading Animation ===== */
-#loading {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.9);
-  z-index: 9999;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-#loading video {
-  width: 180px;
-  max-width: 80%;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
 /* ===== Table ===== */
 table {
   width: 120%;
@@ -129,28 +109,16 @@ th {
   font-weight: bold;
 }
 
-/* 條碼圖靠左 */
-th:nth-last-child(1), td[data-label="條碼圖"] {
-  text-align: left !important;
-}
-
-/* 桌機條碼尺寸 */
+/* ===== 條碼圖（桌機）3:1 比例 ===== */
 .barcode-img {
-  height: 54px;
-  max-width: 90%;
+  width: 180px;
+  height: 60px;
   object-fit: contain;
   display: block;
   margin: 0 auto;
 }
 
-/* 商品位置字體放大 */
-td[data-label="商品位置"] {
-  font-size: 1.5em;
-  font-weight: 600;
-  color: #3b0d0d;
-}
-
-/* ===== 數量輸入框樣式 ===== */
+/* ===== 數量輸入框 ===== */
 input[type="number"] {
   width: 100px;
   font-size: 2em;
@@ -160,7 +128,7 @@ input[type="number"] {
   padding: 4px;
 }
 
-/* ===== 手機版修正 ===== */
+/* ===== 手機版 ===== */
 @media (max-width: 768px) {
   table, thead, tbody, th, td, tr {
     display: block;
@@ -191,7 +159,7 @@ input[type="number"] {
     flex: 0 0 40%;
   }
 
-  /* 條碼圖：靠左顯示文字，條碼整行置中縮小以防超出 */
+  /* 條碼圖調整：靠左文字 + 條碼置中放大但不超框 */
   td[data-label="條碼圖"] {
     display: block !important;
     text-align: left !important;
@@ -203,15 +171,18 @@ input[type="number"] {
     margin-bottom: 4px;
   }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 85% !important;
-    height: 120px !important;
+    width: 100% !important;
+    height: 100px !important;
     object-fit: contain !important;
     display: block;
     margin: 0 auto;
   }
 
-  input[type="number"] {
-    width: 100px;
+  /* 手機版商品位置字體放大 */
+  td[data-label="商品位置"] {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #222;
   }
 
   .tip {
@@ -244,11 +215,7 @@ input[type="number"] {
   <div id="result"></div>
 </div>
 
-<!-- Loading 動畫 -->
-<div id="loading">
-  <video autoplay muted loop playsinline>
-    <source src="wine-loading.mp4" type="video/mp4" />
-  </video>
+<div id="loading" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
   <div style="color:#6b0f1a;font-weight:600;margin-top:10px;">資料查詢中，請稍候…</div>
 </div>
 
@@ -295,12 +262,12 @@ searchBtn.addEventListener("click", async () => {
     data.forEach(item => {
       tableHTML += `<tr>`;
       headers.forEach(h => {
-        tableHTML += `<td data-label="${h}">${item[h] || ""}</td>`;
+        tableHTML += `<td data-label="${h}" style="${h === '商品位置' ? 'font-size:1.5em;font-weight:bold;' : ''}">${item[h] || ""}</td>`;
       });
       tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0"></td>`;
       const code = item["條碼"] || "";
       const barcode = code
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/ean13/${code}?height=54" alt="barcode">`
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/EAN-13/${code}?width=180&height=60" alt="barcode">`
         : "";
       tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
     });
