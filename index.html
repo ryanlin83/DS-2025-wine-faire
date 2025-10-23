@@ -129,6 +129,11 @@ th {
   font-weight: bold;
 }
 
+/* 條碼圖靠左 */
+th:nth-last-child(1), td[data-label="條碼圖"] {
+  text-align: left !important;
+}
+
 /* 桌機條碼尺寸 */
 .barcode-img {
   height: 54px;
@@ -136,6 +141,13 @@ th {
   object-fit: contain;
   display: block;
   margin: 0 auto;
+}
+
+/* 商品位置字體放大 */
+td[data-label="商品位置"] {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #3b0d0d;
 }
 
 /* ===== 數量輸入框樣式 ===== */
@@ -179,7 +191,7 @@ input[type="number"] {
     flex: 0 0 40%;
   }
 
-  /* 條碼圖：靠左顯示文字，條碼整行置中放大 */
+  /* 條碼圖：靠左顯示文字，條碼整行置中縮小以防超出 */
   td[data-label="條碼圖"] {
     display: block !important;
     text-align: left !important;
@@ -191,8 +203,8 @@ input[type="number"] {
     margin-bottom: 4px;
   }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 80% !important;
-    height: 150px !important;
+    width: 85% !important;
+    height: 120px !important;
     object-fit: contain !important;
     display: block;
     margin: 0 auto;
@@ -288,7 +300,7 @@ searchBtn.addEventListener("click", async () => {
       tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0"></td>`;
       const code = item["條碼"] || "";
       const barcode = code
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/128/${code}?height=54" alt="barcode">`
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/ean13/${code}?height=54" alt="barcode">`
         : "";
       tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
     });
@@ -311,8 +323,3 @@ clearBtn.addEventListener("click", () => {
 </script>
 </body>
 </html>
-
-
-
-
-
