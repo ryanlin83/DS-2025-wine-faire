@@ -134,10 +134,10 @@ th:nth-last-child(1), td[data-label="條碼圖"] {
   text-align: left !important;
 }
 
-/* 桌機條碼尺寸 */
+/* 桌機條碼尺寸 (比例約3:1) */
 .barcode-img {
-  height: 54px;
-  max-width: 90%;
+  width: 180px;
+  height: 60px;
   object-fit: contain;
   display: block;
   margin: 0 auto;
@@ -191,7 +191,7 @@ input[type="number"] {
     flex: 0 0 40%;
   }
 
-  /* 條碼圖：靠左顯示文字，條碼整行置中縮小以防超出 */
+  /* 條碼圖：靠左顯示文字，條碼整行置中放大 */
   td[data-label="條碼圖"] {
     display: block !important;
     text-align: left !important;
@@ -203,8 +203,8 @@ input[type="number"] {
     margin-bottom: 4px;
   }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 85% !important;
-    height: 120px !important;
+    width: 110% !important;
+    height: 300px !important;
     object-fit: contain !important;
     display: block;
     margin: 0 auto;
@@ -253,12 +253,21 @@ input[type="number"] {
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzcbfXKRWX-g4-YP8ATXFBPsGLn9-1Q-kwhxzNoQL6wzL-xhLk3SQ0KoiUdPPwQKtN_A/exec";
+const JSON_URL = "data/wine-data.json";
 
 const searchBtn = document.getElementById("searchBtn");
 const clearBtn = document.getElementById("clearBtn");
 const loading = document.getElementById("loading");
 const resultDiv = document.getElementById("result");
+let cachedData = null;
+
+// 先快取 JSON 資料
+async function loadData() {
+  if (cachedData) return cachedData;
+  const res = await fetch(JSON_URL + "?t=" + Date.now()); // 加時間避免舊快取
+  cachedData = await res.json();
+  return cachedData;
+}
 
 // 查詢功能
 searchBtn.addEventListener("click", async () => {
@@ -278,21 +287,21 @@ searchBtn.addEventListener("click", async () => {
   resultDiv.innerHTML = "";
 
   try {
-    const res = await fetch(`${SCRIPT_URL}?order=${encodeURIComponent(codes.join(","))}`);
-    const data = await res.json();
+    const data = await loadData();
+    const results = data.filter(item => codes.includes(item["訂購編號"]));
 
-    if (data.error || data.length === 0) {
+    if (results.length === 0) {
       resultDiv.innerHTML = `<p style="color:red;">查無資料，請確認訂購編號是否正確。</p>`;
       loading.style.display = "none";
       return;
     }
 
     let tableHTML = `<table><thead><tr>`;
-    const headers = Object.keys(data[0]);
+    const headers = Object.keys(results[0]);
     headers.forEach(h => tableHTML += `<th>${h}</th>`);
     tableHTML += `<th>數量</th><th>條碼圖</th></tr></thead><tbody>`;
 
-    data.forEach(item => {
+    results.forEach(item => {
       tableHTML += `<tr>`;
       headers.forEach(h => {
         tableHTML += `<td data-label="${h}">${item[h] || ""}</td>`;
@@ -300,7 +309,7 @@ searchBtn.addEventListener("click", async () => {
       tableHTML += `<td data-label="數量"><input type="number" min="0" placeholder="0"></td>`;
       const code = item["條碼"] || "";
       const barcode = code
-        ? `<img class="barcode-img" src="https://barcodeapi.org/api/ean13/${code}?height=54" alt="barcode">`
+        ? `<img class="barcode-img" src="https://barcodeapi.org/api/ean13/${code}?height=60" alt="barcode">`
         : "";
       tableHTML += `<td data-label="條碼圖">${barcode}</td></tr>`;
     });
