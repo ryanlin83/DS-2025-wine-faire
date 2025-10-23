@@ -141,7 +141,8 @@ button:hover {
 
 /* ===== Table ===== */
 table {
-  width: 120%;
+  width: 100%; /* 改成自適應手機 */
+  max-width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
   font-size: 0.95em;
@@ -164,30 +165,21 @@ th:nth-last-child(1), td[data-label="條碼圖"] {
   text-align: left !important;
 }
 
-/* 桌機條碼尺寸 (比例約3:1) */
+/* 桌機條碼尺寸 */
 .barcode-img {
-  width: 180px;
-  height: 60px;
-  object-fit: contain;
+  width: 100%;       /* 框內自動縮放 */
+  max-width: 180px;  /* 桌機限制 */
+  height: auto;      /* 保持比例 */
   display: block;
   margin: 0 auto;
 }
 
-/* 商品位置字體放大 */
+/* 商品位置字體縮小並換行 */
 td[data-label="商品位置"] {
-  font-size: 1.5em;
+  font-size: 1.2em;
   font-weight: 600;
   color: #3b0d0d;
-}
-
-/* ===== 數量輸入框樣式 ===== */
-input[type="number"] {
-  width: 100px;
-  font-size: 2em;
-  text-align: center;
-  border-radius: 6px;
-  border: 1px solid #aaa;
-  padding: 4px;
+  word-break: break-word;
 }
 
 /* ===== 手機版修正 ===== */
@@ -221,7 +213,6 @@ input[type="number"] {
     flex: 0 0 40%;
   }
 
-  /* 條碼圖：靠左顯示文字，條碼整行置中放大 */
   td[data-label="條碼圖"] {
     display: block !important;
     text-align: left !important;
@@ -233,11 +224,16 @@ input[type="number"] {
     margin-bottom: 4px;
   }
   td[data-label="條碼圖"] img.barcode-img {
-    width: 110% !important;
-    height: 300px !important;
-    object-fit: contain !important;
+    width: 90%;
+    height: auto;
+    max-height: 200px; /* 避免過高 */
     display: block;
     margin: 0 auto;
+  }
+
+  /* 商品位置手機字體略小 */
+  td[data-label="商品位置"] {
+    font-size: 1em;
   }
 
   input[type="number"] {
